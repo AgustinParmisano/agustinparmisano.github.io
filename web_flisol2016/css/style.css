@@ -129,7 +129,7 @@ a.navbar-brand {
 	background:url(../images/flisol_imagenes/FLISoL-2015.png) no-repeat;
 	min-height:600px;
 	background-position:center;
-	background-size:cover;
+	background-size: 100% auto;
 	-webkit-background-size:cover;
 	-o-background-size:cover;
 	-moz-background-size:cover;
