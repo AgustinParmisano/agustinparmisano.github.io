@@ -136,6 +136,23 @@ a.navbar-brand {
 	-ms-background-size:cover;
 	position:relative;
 }
+
+/* ----------- Galaxy S3 ----------- */
+
+/* Portrait and Landscape */
+@media (max-width: 361px) {
+  .banner {
+  	background:url(../images/flisol_imagenes/FLISoL-xico-2015.png) no-repeat;
+  	background-position:center;
+  	background-size: contain;
+  	-webkit-background-size:contain;
+  	-o-background-size:contain;
+  	-moz-background-size:contain;
+  	-ms-background-size:contain;
+  	position:relative;
+  }
+}
+
 .banner-content {
     text-align: center;
     background-color:rgba(220,219,219,0.39);
