@@ -126,7 +126,7 @@ a.navbar-brand {
 	background-color:#000;
 }
 .banner {
-	background:url(../images/flisol_imagenes/FLISoL-2015.png) no-repeat;
+	background:url(../images/flisol_imagenes/logo-flisol.svg) no-repeat;
 	min-height:600px;
 	background-position:center;
 	background-size: 100% auto;
@@ -135,6 +135,7 @@ a.navbar-brand {
 	-moz-background-size:cover;
 	-ms-background-size:cover;
 	position:relative;
+  margin-top: 2em;
 }
 
 /* ----------- Galaxy S3 ----------- */
