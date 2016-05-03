@@ -359,26 +359,6 @@ Se entregarán certificados avalados por la Universidad Nacional de la Plata a t
 				<!-- Wrapper for slides -->
 					<div class="carousel-inner" role="listbox">
 						<div class="item active">
-							<img src="images/flisol_imagenes/disertantes/valentin_muro.jpg" alt="Corporate image" class="img-responsive">
-						</div>
-					</div>
-				</div>
-			<!-- /carousel -->
-			</div>
-			<div class="col-sm-6 text-center slideanim about1">
-				<hr>
-				<p class="p1"><strong>Valentín Muro</strong> Tengo 26 años y vivo en Buenos Aires, Argentina. Estudio Filosofía en la Universidad de Buenos Aires (UBA), donde investigué acerca de los límites de la inteligencia artificial y sus implicaciones en los desarrollos tecnológicos, tocando los campos de la Lógica y Computabilidad, la Filosofía de la Mente, la Filosofía de la Ciencia y la Técnica, entre otros. Actualmente investigo sobre la ética hacker. Además, en mi vida paralela, soy desarrollador web desde hace muchos años y actualmente hago front-end para la FFyL de la Universidad de Buenos Aires. Hace unos años me divertí coordinando el Proyecto Burbuja, comencé varios sitios web que crecieron mucho y en 2009 co-fundé una revista en línea, Feel The Noise Mag. En el 2013 junto a un espectacular grupo de colegas formé Wazzabi, una orgnización con el fin de promover la idea de que todos pueden aprender a hacer lo que sea. En junio de 2013 tuve la oportunidad de dar una charla TEDx donde entre algunas anécdotas conté algunas de las ideas que me motivan. A principios de 2014 comencé el Hackumental, un documental de código abierto acerca de la cultura del hacer alrededor del mundo. Luego fui encargado de comunicación y outreach de Wikimedia Argentina, promoviendo los proyectos de la Fundación y la cultura libre. Desde mayo de 2014 hasta julio de 2015 trabajé como joven padawan junto a Tomás García en la dirección creativa de PepperMelon/Ño Empire y en varios proyectos creativos independientes. Actualmente experimento alrededor de la crítica a la tecnología a través de la educación, el arte, la ciencia y cualquier forma de expresión creativa que esté a mi alcance.</p>
-			  <p class="p1"><strong>WTF is a Creative Technologist.</strong> ¿Qué hace un filósofo especializado en tecnología en una agencia digital? </p>
-			</div>
-		</div>
-    <div class="row">
-      <div class="col-sm-6 slideanim about2">
-			<!-- carousel -->
-				<div id="myCarousel" class="carousel slide">
-				<!-- Indicators -->
-				<!-- Wrapper for slides -->
-					<div class="carousel-inner" role="listbox">
-						<div class="item active">
 							<img src="images/flisol_imagenes/disertantes/bianca_raccioppe.jpg" alt="Corporate image" class="img-responsive">
 						</div>
 					</div>
@@ -531,9 +511,9 @@ Se entregarán certificados avalados por la Universidad Nacional de la Plata a t
                </tr>
                <tr>
                  <td>14:30</td>
-                 <td>WTF is a Creative Technologist</td>
-                 <td>Valentín Muro</td>
-                 <td>Aula 5</td>
+                 <td>Receso</td>
+                 <td></td>
+                 <td></td>
                </tr>
                <tr>
                  <td>15:00</td>
@@ -568,7 +548,7 @@ Se entregarán certificados avalados por la Universidad Nacional de la Plata a t
                <tr>
                  <td>17:30</td>
                  <td>Experiencias de uso de la herramienta de software libre Moldeo</td>
-                 <td>Alejandra Ceriani</td>
+                 <td>Alejandra Ceriani, Victoria Dallachiesa y Aime Guzmán</td>
                  <td>Aula 5</td>
                </tr>
                <tr>
@@ -705,6 +685,13 @@ Se entregarán certificados avalados por la Universidad Nacional de la Plata a t
 					<a href="https://twitter.com/la_fuente_unlp?lang=es"><span class="twitter"></span></a>
 				</div>
 			</div>
+      <br>
+      <br>
+      <br>
+      <div class="col-md-10 col-md-offset-1">
+        <img class="img-responsive" src="images/flisol_imagenes/logos-todos.png" alt="logos de secretarías" />
+      </div>
+      <br>
 		</div>
 		<hr>
 		<div class="copyright">
