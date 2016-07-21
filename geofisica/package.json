@@ -1,0 +1,18 @@
+{
+  "main": "index.html",
+  "name": "Geofisica",
+  "version": "0.0.5",
+  "keywords": [ "demo", "node-webkit" ],
+  "window": {
+    "icon": "images/imagen.png",
+	"width": 1000,
+    "height": 800,
+    "toolbar": false,
+    "position": "center",
+    "resizable": true,
+	"min_width": 800,
+    "min_height": 600
+   }
+}
+
+

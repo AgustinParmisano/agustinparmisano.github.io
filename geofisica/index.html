@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Geofísica de Exploración: método gravimétrico</title>
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css" >
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.css" >
+    <!-- Estilos -->
+    <link rel="stylesheet" type="text/css" href="css/sb-admin-2.css" >
+    <link rel="stylesheet" type="text/css" href="css/gravimetria.css"  >
+	<!-- <link href="css/geocharts.css" rel="stylesheet"> -->
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+		
+  </head>
+  <body ng-app="taller" >
+
+    <div class="container-fluid">
+		  <div class="panel panel-success" >
+			  <!- Header  ->
+				<!--<div class="col-sm-12 col-md-12 col-lg-12" style="background-color:#E0F0D6;">-->
+				<div class="panel-heading">
+					<img src="images/logo.png" class="img-responsive" alt="logo secretaria de extension fcalg" width="350" height="270" style="position:relative; float:right"/>
+					<h1 style="color:#59B958;"><b>Geofísica de Exploración: método gravimétrico</b></b></h1>
+				</div>
+				<!- Menu ->
+				<div class="row">
+				<div class="collapse navbar-collapse navbar-ex1-collapse" ng-controller="inicioCtrl">
+					<nav class="navbar navbar-default" role="navigation">
+							 <ul class="nav navbar-nav navbar-left">
+								  <li class="active"><button type="button" class="btn btn-success" data-toggle="modal" data-target="#exampleModal" data-whatever="@mdo"><b>Inicio</b></button></li>
+								  <li class="active"><button type="button" class="btn btn-success" data-toggle="modal" data-target="#ayudaModal" data-whatever="@mdo"><span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>Acerca de</button></li>
+							</ul>
+
+						<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+						  <div class="modal-dialog" >
+						    <div class="modal-content">
+						      <div class="modal-header">
+						        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+						        <h4 class="modal-title" id="exampleModalLabel">Volver a Inicio</h4>
+						      </div>
+						      <div class="modal-body">
+						        <form>
+						          <div class="form-group">
+						            <label for="message-text" class="control-label"><h4>Atención! Usted perderá los datos ingresados al retornar a la pantalla de inicio.</h4></label>
+						          </div>
+						        </form>
+						      </div>
+						      <div class="modal-footer" ng-controller="inicioCtrl">
+						        <button type="button" class="btn btn-danger" data-dismiss="modal">Cancelar</button>
+						        <button type="button" ng-click="inicioAceptar()" class="btn btn-success" data-dismiss="modal">Aceptar</button>
+						      </div>
+						    </div>
+						  </div>
+						</div>
+						<div class="modal fade" id="ayudaModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+						  <div class="modal-dialog" >
+						    <div class="modal-content">
+						      <div class="modal-header">
+						        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+						        <h4 class="modal-title" id="exampleModalLabel">Sobre nosotros</h4>
+						      </div>
+						      <div class="modal-body">
+						        <form>
+						          <div class="form-group">
+						            <label for="message-text" class="control-label">
+									<h4>Esta aplicacion fue desarrollada por: 
+									Agustin Parmisano Sabbione, Carla Luna Gennari, en conjunto con Andres Cesanelli y Santiago Gabriel Solazzi.</h4>
+
+									Contacto: 
+									agustinparmisano@gmail.com 
+									carla.lunagennari@gmail.com
+									andres@cesanelli.com.ar
+									solazzi.santiago@gmail.com
+									</label>
+									<p>Version de Aplicación 0.0.5</p>
+						          </div>
+						        </form>
+						      </div>
+						      <div class="modal-footer" ng-controller="inicioCtrl">
+						        <button type="button" class="btn btn-success" data-dismiss="modal">Cerrar</button>
+						      </div>
+						    </div>
+						  </div>
+						</div>
+					</nav>
+					</div>
+				</div>
+		   <!- Titulo  ->
+		   
+			<ng-view></ng-view>
+	  </div>
+		
+		
+	</div>
+	<!- Scripts ->
+	<script src="node_modules\requirejs\require.js"></script>
+	
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+	<script src="js/jquery-1.11.2.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="js/bootstrap.min.js"></script>
+    <!-- Scripts De Aplicación--> 
+    <script src="node_modules/bower_components/angular/angular.js"></script>
+	<script src="node_modules/bower_components/angular-route/angular-route.js"></script>
+    <script src="js/router/routes.js"></script>	
+	<script src="js/highcharts-ng.js"></script>
+    <script src="js/highstock.src.js"></script>
+	<!-- Este script lo pongo para probar -->
+	<script src="controller/loadProblem-module-ng.js"></script>
+	<script src="controller/elegirProblema-module.js"></script> 
+	<script src="controller/login-module-ng.js"></script> 
+	<script src="controller/alumnoResolverProblemaCtrl.js"></script>
+	<script src="controller/alumnoModeladoCtrl.js"></script>
+	<script src="controller/alumnoFinCtrl.js"></script>
+	<script src="controller/problem-module-ng.js"></script>
+    <script src="node_modules/nw-fileDialog-master/nw-fileDialog.js"></script>
+    <script src="js/fileManager/FileManager.js"></script>
+    <script src="js/fileManager/FileSaver.js"></script>
+    <script src="js/jsPDF-master/dist/jspdf.debug.js"></script>
+	
+
+	
+  </body>
+</html>
