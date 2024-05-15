@@ -1,3 +1,0 @@
-Sacar secciones services y about del html (comentar)
-Bajas imagenes de fotografos copadas y editarlas para encajar los tamaños.
-Inventar o buscar texto atractivo que tenga que ver con la Vendetta o la birra
