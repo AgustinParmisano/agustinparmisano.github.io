@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grid de Imágenes</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="assets/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="bg-primary text-white py-3 shadow-sm">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <button class="btn btn-outline-light d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#configModal">
+                        <i class="fas fa-cog"></i>
+                        <span>Configuración</span>
+                    </button>
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <h1 class="h3 mb-0">Grid de Imágenes</h1>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container-fluid py-4">
+        <div class="row justify-content-center align-items-center h-100">
+            <!-- Botón Izquierda -->
+            <div class="col-auto">
+                <button id="nav-left" class="btn btn-outline-primary nav-btn" title="Anterior">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            </div>
+            
+            <!-- Grid Container -->
+            <div class="col-auto">
+                <div id="grid-container" class="image-grid">
+                    <!-- El grid se generará dinámicamente aquí -->
+                </div>
+            </div>
+            
+            <!-- Botón Derecha -->
+            <div class="col-auto">
+                <button id="nav-right" class="btn btn-outline-primary nav-btn" title="Siguiente (Random)">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-3 mt-auto">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-0">&copy; 2024 Grid de Imágenes</p>
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <p class="mb-0" id="grid-info">Grid: 8x8</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modal de Configuración -->
+    <div class="modal fade" id="configModal" tabindex="-1" aria-labelledby="configModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="configModalLabel">
+                        <i class="fas fa-cog me-2"></i>
+                        Configuración del Grid
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="grid-config-form">
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Tamaño del Grid</label>
+                            <div class="row g-2">
+                                <!-- Grids cuadrados -->
+                                <div class="col-12">
+                                    <h6 class="text-muted mb-2">Grids Cuadrados</h6>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="gridSize" id="grid6x6" value="6x6">
+                                        <label class="form-check-label" for="grid6x6">
+                                            6 x 6 (36 imágenes)
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="gridSize" id="grid8x8" value="8x8">
+                                        <label class="form-check-label" for="grid8x8">
+                                            8 x 8 (64 imágenes)
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="gridSize" id="grid16x16" value="16x16">
+                                        <label class="form-check-label" for="grid16x16">
+                                            16 x 16 (256 imágenes)
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <!-- Grids rectangulares -->
+                                <div class="col-12 mt-3">
+                                    <h6 class="text-muted mb-2">Grids Rectangulares</h6>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="gridSize" id="grid4x6" value="4x6" checked>
+                                        <label class="form-check-label" for="grid4x6">
+                                            4 x 6 (24 imágenes)
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="gridSize" id="grid4x8" value="4x8">
+                                        <label class="form-check-label" for="grid4x8">
+                                            4 x 8 (32 imágenes)
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="gridSize" id="grid4x16" value="4x16">
+                                        <label class="form-check-label" for="grid4x16">
+                                            4 x 16 (64 imágenes)
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Configuraciones adicionales</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="showBorders" checked>
+                                <label class="form-check-label" for="showBorders">
+                                    Mostrar bordes en las imágenes
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="aspectRatio" checked>
+                                <label class="form-check-label" for="aspectRatio">
+                                    Mantener aspecto cuadrado
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Cómo usar</label>
+                            <div class="alert alert-info small">
+                                <strong>Fijar imágenes:</strong>
+                                <ul class="mb-2">
+                                    <li>Haz <strong>clic</strong> en una imagen para fijarla (borde verde)</li>
+                                    <li>Haz <strong>clic</strong> otra vez para desfijarla</li>
+                                    <li>Las imágenes fijas no se mueven con la navegación</li>
+                                </ul>
+                                <strong>Intercambiar imágenes:</strong>
+                                <ul class="mb-2">
+                                    <li>Mantén <strong>Shift</strong> + clic en primera imagen (borde azul)</li>
+                                    <li>Mantén <strong>Shift</strong> + clic en segunda imagen para intercambiar</li>
+                                    <li>Solo funciona con imágenes no fijas</li>
+                                    <li>Presiona <strong>Escape</strong> para deseleccionar</li>
+                                </ul>
+                                <strong>Navegación:</strong>
+                                <ul class="mb-2">
+                                    <li>Botones o <strong>teclas de flecha</strong> para navegar</li>
+                                    <li>Flecha derecha (→): Genera imágenes nuevas (evita duplicados)</li>
+                                    <li>Flecha izquierda (←): Vuelve al estado anterior</li>
+                                    <li>Las imágenes fijas permanecen en su lugar</li>
+                                </ul>
+                                <strong>Descargar:</strong>
+                                <ul class="mb-0">
+                                    <li>Botón verde (esquina inferior derecha) para descargar el grid</li>
+                                    <li>Se guarda como imagen JPEG con fecha y tamaño del grid</li>
+                                    <li>Incluye bordes verdes para imágenes fijas</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="apply-config">Aplicar Configuración</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botón de Descarga -->
+    <button id="download-btn" class="btn btn-success download-btn" title="Descargar Grid como JPEG">
+        <i class="fas fa-download me-2"></i>
+        Descargar
+    </button>
+
+    <!-- Loading Spinner -->
+    <div id="loading-spinner" class="loading-overlay d-none">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/main.js"></script>
+</body>
+</html>
