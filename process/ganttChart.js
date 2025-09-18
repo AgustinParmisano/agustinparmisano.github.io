@@ -483,7 +483,7 @@ class GanttChart {
     }
 
     /**
-     * Actualiza la visualización de la cola de listos
+     * Actualiza la visualización de la cola de listos como tabla
      * @param {Object} readyQueue - Estado de la cola por tiempo
      */
     updateReadyQueueDisplay(readyQueue) {
@@ -492,39 +492,223 @@ class GanttChart {
 
         container.innerHTML = '';
 
-        const times = Object.keys(readyQueue).map(Number).sort((a, b) => a - b);
+        // Crear tabla de cola de listos
+        const queueTable = this.createReadyQueueTable(readyQueue);
+        container.appendChild(queueTable);
+    }
+    
+    /**
+     * Crea una tabla para mostrar la evolución de la Ready Queue
+     * @param {Object} readyQueue - Estado de la cola por tiempo
+     * @returns {HTMLElement} - Tabla de la cola
+     */
+    createReadyQueueTable(readyQueue) {
+        const table = document.createElement('table');
+        table.className = 'queue-table';
         
-        times.forEach(time => {
-            const processes = readyQueue[time];
-            if (processes.length > 0 || time === 0) {
-                const timeStep = document.createElement('div');
-                timeStep.className = 'queue-time-step';
-
-                const title = document.createElement('h4');
-                title.textContent = `Tiempo ${time}`;
-
-                const processContainer = document.createElement('div');
-                processContainer.className = 'queue-processes';
-
-                if (processes.length === 0) {
-                    const emptyMsg = document.createElement('span');
-                    emptyMsg.textContent = 'Cola vacía';
-                    emptyMsg.style.color = '#888';
-                    processContainer.appendChild(emptyMsg);
-                } else {
-                    processes.forEach(processName => {
-                        const processElement = document.createElement('div');
-                        processElement.className = 'queue-process';
-                        processElement.textContent = processName;
-                        processContainer.appendChild(processElement);
-                    });
-                }
-
-                timeStep.appendChild(title);
-                timeStep.appendChild(processContainer);
-                container.appendChild(timeStep);
+        // Crear encabezado
+        const header = this.createQueueTableHeader();
+        table.appendChild(header);
+        
+        // Crear cuerpo de la tabla
+        const tbody = this.createQueueTableBody(readyQueue);
+        table.appendChild(tbody);
+        
+        return table;
+    }
+    
+    /**
+     * Crea el encabezado de la tabla de Ready Queue
+     * @returns {HTMLElement} - Encabezado de la tabla
+     */
+    createQueueTableHeader() {
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        
+        // Columna de tiempo
+        const timeHeader = document.createElement('th');
+        timeHeader.textContent = 'Tiempo';
+        timeHeader.className = 'queue-header-time';
+        headerRow.appendChild(timeHeader);
+        
+        // Columna de procesos ejecutándose
+        const executingHeader = document.createElement('th');
+        executingHeader.textContent = 'Ejecutando';
+        executingHeader.className = 'queue-header-executing';
+        headerRow.appendChild(executingHeader);
+        
+        // Columna de cola de listos
+        const queueHeader = document.createElement('th');
+        queueHeader.textContent = 'Cola de Listos';
+        queueHeader.className = 'queue-header-ready';
+        headerRow.appendChild(queueHeader);
+        
+        // Columna de estado
+        const statusHeader = document.createElement('th');
+        statusHeader.textContent = 'Estado';
+        statusHeader.className = 'queue-header-status';
+        headerRow.appendChild(statusHeader);
+        
+        thead.appendChild(headerRow);
+        return thead;
+    }
+    
+    /**
+     * Crea el cuerpo de la tabla de Ready Queue
+     * @param {Object} readyQueue - Estado de la cola por tiempo
+     * @returns {HTMLElement} - Cuerpo de la tabla
+     */
+    createQueueTableBody(readyQueue) {
+        const tbody = document.createElement('tbody');
+        
+        // Obtener rango de tiempo completo
+        const maxTime = Math.max(...this.processes.map(p => p.finishTime || 0));
+        
+        for (let time = 0; time < maxTime; time++) {
+            const row = document.createElement('tr');
+            
+            // Columna de tiempo
+            const timeCell = document.createElement('td');
+            timeCell.textContent = time;
+            timeCell.className = 'queue-cell-time';
+            row.appendChild(timeCell);
+            
+            // Columna de proceso ejecutándose
+            const executingCell = document.createElement('td');
+            const executingProcess = this.getExecutingProcessAtTime(time);
+            if (executingProcess) {
+                executingCell.innerHTML = `<span class="executing-process">P${executingProcess.id}</span>`;
+            } else {
+                executingCell.innerHTML = '<span class="no-process">-</span>';
+            }
+            executingCell.className = 'queue-cell-executing';
+            row.appendChild(executingCell);
+            
+            // Columna de cola de listos
+            const queueCell = document.createElement('td');
+            const queueAtTime = this.getDetailedReadyQueueAtTime(time);
+            if (queueAtTime.length > 0) {
+                const queueElements = queueAtTime.map(processId => 
+                    `<span class="queue-process-item">P${processId}</span>`
+                ).join(', ');
+                queueCell.innerHTML = queueElements;
+            } else {
+                queueCell.innerHTML = '<span class="empty-queue">Vacía</span>';
+            }
+            queueCell.className = 'queue-cell-ready';
+            row.appendChild(queueCell);
+            
+            // Columna de estado
+            const statusCell = document.createElement('td');
+            const status = this.getSystemStatusAtTime(time);
+            statusCell.innerHTML = `<span class="status-${status.type}">${status.message}</span>`;
+            statusCell.className = 'queue-cell-status';
+            row.appendChild(statusCell);
+            
+            // Resaltar filas importantes
+            if (this.isImportantTime(time)) {
+                row.classList.add('important-time');
+            }
+            
+            tbody.appendChild(row);
+        }
+        
+        return tbody;
+    }
+    
+    /**
+     * Obtiene el proceso que se está ejecutando en un tiempo dado
+     * @param {number} time - Tiempo específico
+     * @returns {Object|null} - Proceso ejecutándose o null
+     */
+    getExecutingProcessAtTime(time) {
+        return this.processes.find(p => 
+            p.startTime <= time && p.finishTime > time
+        ) || null;
+    }
+    
+    /**
+     * Obtiene los procesos en cola de listos de manera detallada
+     * @param {number} time - Tiempo específico
+     * @returns {Array} - IDs de procesos en cola
+     */
+    getDetailedReadyQueueAtTime(time) {
+        const ready = [];
+        
+        this.processes.forEach(process => {
+            // Proceso ha llegado pero no ha iniciado aún
+            if (process.arrivalTime <= time && 
+                (!process.startTime || process.startTime > time)) {
+                ready.push(process.id);
             }
         });
+        
+        return ready.sort((a, b) => {
+            const processA = this.processes.find(p => p.id === a);
+            const processB = this.processes.find(p => p.id === b);
+            return processA.arrivalTime - processB.arrivalTime;
+        });
+    }
+    
+    /**
+     * Obtiene el estado del sistema en un tiempo dado
+     * @param {number} time - Tiempo específico
+     * @returns {Object} - Estado del sistema
+     */
+    getSystemStatusAtTime(time) {
+        const executing = this.getExecutingProcessAtTime(time);
+        const ready = this.getDetailedReadyQueueAtTime(time);
+        const arrivals = this.processes.filter(p => p.arrivalTime === time);
+        const completions = this.processes.filter(p => p.finishTime === time);
+        
+        if (arrivals.length > 0) {
+            const arrivedNames = arrivals.map(p => `P${p.id}`).join(', ');
+            return {
+                type: 'arrival',
+                message: `Llega: ${arrivedNames}`
+            };
+        }
+        
+        if (completions.length > 0) {
+            const completedNames = completions.map(p => `P${p.id}`).join(', ');
+            return {
+                type: 'completion',
+                message: `Termina: ${completedNames}`
+            };
+        }
+        
+        if (executing) {
+            return {
+                type: 'executing',
+                message: 'Procesando'
+            };
+        }
+        
+        if (ready.length > 0) {
+            return {
+                type: 'waiting',
+                message: 'Esperando CPU'
+            };
+        }
+        
+        return {
+            type: 'idle',
+            message: 'Sistema inactivo'
+        };
+    }
+    
+    /**
+     * Determina si un tiempo es importante para resaltar
+     * @param {number} time - Tiempo a evaluar
+     * @returns {boolean} - True si es un tiempo importante
+     */
+    isImportantTime(time) {
+        // Tiempo es importante si hay llegadas o finalizaciones
+        const hasArrivals = this.processes.some(p => p.arrivalTime === time);
+        const hasCompletions = this.processes.some(p => p.finishTime === time);
+        const hasStarts = this.processes.some(p => p.startTime === time);
+        
+        return hasArrivals || hasCompletions || hasStarts;
     }
 
     /**
