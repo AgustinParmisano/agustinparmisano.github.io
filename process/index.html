@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Procesos FCFS</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Simulador de Procesos del Sistema Operativo</h1>
+            <h2>Algoritmo FCFS (First Come, First Served)</h2>
+        </header>
+
+        <div class="input-section">
+            <div class="file-input">
+                <label for="yamlFile">Seleccionar archivo YAML:</label>
+                <input type="file" id="yamlFile" accept=".yml,.yaml" />
+            </div>
+            <button id="loadExample">Cargar Ejemplo</button>
+            <button id="simulate">Simular Procesos</button>
+        </div>
+
+        <div class="results-section">
+            <div class="process-table">
+                <h3>Tabla de Procesos</h3>
+                <table id="processTable">
+                    <thead>
+                        <tr>
+                            <th>Proceso</th>
+                            <th>CPU</th>
+                            <th>Llegada</th>
+                            <th>Tiempo Inicio</th>
+                            <th>Tiempo Fin</th>
+                            <th>Tiempo Respuesta</th>
+                            <th>Tiempo Espera</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <div class="gantt-container">
+                <h3>Diagrama de Gantt</h3>
+                <div id="ganttChart"></div>
+            </div>
+
+            <div class="ready-queue">
+                <h3>Cola de Listos (Ready Queue)</h3>
+                <div id="readyQueueDisplay"></div>
+            </div>
+
+            <div class="statistics">
+                <h3>Estadísticas</h3>
+                <div id="statsDisplay">
+                    <p>Tiempo de Respuesta Promedio: <span id="avgResponseTime">-</span></p>
+                    <p>Tiempo de Espera Promedio: <span id="avgWaitTime">-</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="yamlParser.js"></script>
+    <script src="fcfsScheduler.js"></script>
+    <script src="ganttChart.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>

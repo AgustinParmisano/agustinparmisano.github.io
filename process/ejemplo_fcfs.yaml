@@ -1,0 +1,28 @@
+# Archivo YAML de ejemplo para el simulador FCFS
+# Basado en los datos de la imagen proporcionada
+# Algoritmo: First Come, First Served (FCFS)
+
+processes:
+  - id: 1
+    name: "P1"
+    cpu_time: 4
+    arrival_time: 0
+    
+  - id: 2
+    name: "P2"
+    cpu_time: 3
+    arrival_time: 1
+    
+  - id: 3
+    name: "P3"
+    cpu_time: 2
+    arrival_time: 3
+    
+  - id: 4
+    name: "P4"
+    cpu_time: 3
+    arrival_time: 4
+
+# Configuración del algoritmo
+algorithm: "FCFS"
+description: "Simulación del algoritmo First Come, First Served"

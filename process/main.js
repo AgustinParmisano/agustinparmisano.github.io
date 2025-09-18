@@ -1,0 +1,405 @@
+/**
+ * Archivo principal del simulador de procesos FCFS
+ * Integra todos los módulos y maneja la interfaz de usuario
+ */
+
+class ProcessSimulator {
+    constructor() {
+        this.yamlParser = new YAMLParser();
+        this.scheduler = new FCFSScheduler();
+        this.ganttChart = new GanttChart();
+        
+        this.currentProcesses = [];
+        this.simulationResult = null;
+        
+        this.initialize();
+    }
+
+    /**
+     * Inicializa el simulador y configura los eventos
+     */
+    initialize() {
+        try {
+            // Inicializar el diagrama de Gantt
+            this.ganttChart.initialize('ganttChart');
+            
+            // Configurar eventos de la interfaz
+            this.setupEventListeners();
+            
+            // Mostrar mensaje inicial
+            this.showInitialMessage();
+            
+        } catch (error) {
+            console.error('Error al inicializar el simulador:', error);
+            this.showError('Error al inicializar el simulador: ' + error.message);
+        }
+    }
+
+    /**
+     * Configura todos los event listeners de la interfaz
+     */
+    setupEventListeners() {
+        // Botón para cargar archivo YAML
+        const fileInput = document.getElementById('yamlFile');
+        if (fileInput) {
+            fileInput.addEventListener('change', (e) => {
+                this.handleFileSelection(e.target.files[0]);
+            });
+        }
+
+        // Botón para cargar ejemplo
+        const loadExampleBtn = document.getElementById('loadExample');
+        if (loadExampleBtn) {
+            loadExampleBtn.addEventListener('click', () => {
+                this.loadExample();
+            });
+        }
+
+        // Botón para simular
+        const simulateBtn = document.getElementById('simulate');
+        if (simulateBtn) {
+            simulateBtn.addEventListener('click', () => {
+                this.runSimulation();
+            });
+        }
+
+        // Agregar evento de drag & drop para archivos YAML
+        this.setupDragAndDrop();
+    }
+
+    /**
+     * Configura funcionalidad de drag & drop
+     */
+    setupDragAndDrop() {
+        const container = document.querySelector('.input-section');
+        if (!container) return;
+
+        container.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            container.classList.add('drag-over');
+        });
+
+        container.addEventListener('dragleave', () => {
+            container.classList.remove('drag-over');
+        });
+
+        container.addEventListener('drop', (e) => {
+            e.preventDefault();
+            container.classList.remove('drag-over');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                this.handleFileSelection(files[0]);
+            }
+        });
+    }
+
+    /**
+     * Maneja la selección de archivo YAML
+     * @param {File} file - Archivo seleccionado
+     */
+    async handleFileSelection(file) {
+        if (!file) {
+            this.showError('No se seleccionó ningún archivo');
+            return;
+        }
+
+        try {
+            this.showLoading('Cargando archivo...');
+            
+            // Parsear el archivo YAML
+            this.currentProcesses = await this.yamlParser.readYAMLFile(file);
+            
+            this.hideLoading();
+            this.showSuccess(`Archivo cargado exitosamente. ${this.currentProcesses.length} procesos encontrados.`);
+            
+            // Mostrar procesos en la tabla
+            this.updateProcessTable(this.currentProcesses);
+            
+        } catch (error) {
+            this.hideLoading();
+            this.showError('Error al cargar archivo: ' + error.message);
+        }
+    }
+
+    /**
+     * Carga el ejemplo de procesos
+     */
+    loadExample() {
+        try {
+            this.showLoading('Cargando ejemplo...');
+            
+            // Cargar procesos del ejemplo
+            this.currentProcesses = this.yamlParser.loadExampleProcesses();
+            
+            this.hideLoading();
+            this.showSuccess(`Ejemplo cargado exitosamente. ${this.currentProcesses.length} procesos cargados.`);
+            
+            // Mostrar procesos en la tabla
+            this.updateProcessTable(this.currentProcesses);
+            
+        } catch (error) {
+            this.hideLoading();
+            this.showError('Error al cargar ejemplo: ' + error.message);
+        }
+    }
+
+    /**
+     * Ejecuta la simulación FCFS
+     */
+    runSimulation() {
+        if (!this.currentProcesses || this.currentProcesses.length === 0) {
+            this.showError('Primero debe cargar un archivo YAML o el ejemplo');
+            return;
+        }
+
+        try {
+            this.showLoading('Ejecutando simulación...');
+            
+            // Ejecutar algoritmo FCFS
+            this.simulationResult = this.scheduler.schedule(this.currentProcesses);
+            
+            // Actualizar todas las visualizaciones
+            this.updateAllDisplays();
+            
+            this.hideLoading();
+            this.showSuccess('Simulación completada exitosamente');
+            
+        } catch (error) {
+            this.hideLoading();
+            this.showError('Error en la simulación: ' + error.message);
+        }
+    }
+
+    /**
+     * Actualiza todas las visualizaciones con los resultados
+     */
+    updateAllDisplays() {
+        if (!this.simulationResult) return;
+
+        // Actualizar diagrama de Gantt
+        this.ganttChart.render(this.simulationResult);
+        
+        // Actualizar tabla de procesos
+        this.ganttChart.updateProcessTable(this.simulationResult.processes);
+        
+        // Actualizar cola de listos
+        this.ganttChart.updateReadyQueueDisplay(this.simulationResult.readyQueue);
+        
+        // Actualizar estadísticas
+        this.ganttChart.updateStatistics(this.simulationResult.statistics);
+    }
+
+    /**
+     * Actualiza solo la tabla de procesos (antes de simular)
+     * @param {Array} processes - Lista de procesos
+     */
+    updateProcessTable(processes) {
+        const tableBody = document.querySelector('#processTable tbody');
+        if (!tableBody) return;
+
+        tableBody.innerHTML = '';
+
+        processes.forEach(process => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${process.name}</td>
+                <td>${process.cpuTime}</td>
+                <td>${process.arrivalTime}</td>
+                <td>-</td>
+                <td>-</td>
+                <td>-</td>
+                <td>-</td>
+            `;
+            tableBody.appendChild(row);
+        });
+    }
+
+    /**
+     * Muestra un mensaje de carga
+     * @param {string} message - Mensaje a mostrar
+     */
+    showLoading(message = 'Cargando...') {
+        const container = document.querySelector('.results-section');
+        if (container) {
+            container.classList.add('loading');
+        }
+        
+        this.showMessage(message, 'info');
+    }
+
+    /**
+     * Oculta el indicador de carga
+     */
+    hideLoading() {
+        const container = document.querySelector('.results-section');
+        if (container) {
+            container.classList.remove('loading');
+        }
+    }
+
+    /**
+     * Muestra un mensaje de éxito
+     * @param {string} message - Mensaje a mostrar
+     */
+    showSuccess(message) {
+        this.showMessage(message, 'success');
+    }
+
+    /**
+     * Muestra un mensaje de error
+     * @param {string} message - Mensaje de error
+     */
+    showError(message) {
+        this.showMessage(message, 'error');
+    }
+
+    /**
+     * Muestra un mensaje en la interfaz
+     * @param {string} message - Mensaje a mostrar
+     * @param {string} type - Tipo de mensaje (success, error, info)
+     */
+    showMessage(message, type = 'info') {
+        // Remover mensajes anteriores
+        const existingMessages = document.querySelectorAll('.message');
+        existingMessages.forEach(msg => msg.remove());
+
+        // Crear nuevo mensaje
+        const messageElement = document.createElement('div');
+        messageElement.className = `message message-${type}`;
+        messageElement.textContent = message;
+        
+        // Estilos del mensaje
+        messageElement.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            z-index: 10000;
+            max-width: 400px;
+            word-wrap: break-word;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            ${type === 'success' ? 'background: #4CAF50;' : ''}
+            ${type === 'error' ? 'background: #f44336;' : ''}
+            ${type === 'info' ? 'background: #2196F3;' : ''}
+        `;
+
+        document.body.appendChild(messageElement);
+
+        // Auto-remover después de 5 segundos
+        setTimeout(() => {
+            if (messageElement.parentNode) {
+                messageElement.remove();
+            }
+        }, 5000);
+    }
+
+    /**
+     * Muestra mensaje inicial de bienvenida
+     */
+    showInitialMessage() {
+        const container = document.querySelector('.results-section');
+        if (container) {
+            const welcomeMessage = document.createElement('div');
+            welcomeMessage.className = 'welcome-message';
+            welcomeMessage.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #666;">
+                    <h3>¡Bienvenido al Simulador de Procesos FCFS!</h3>
+                    <p>Para comenzar:</p>
+                    <ol style="text-align: left; display: inline-block;">
+                        <li>Carga un archivo YAML con los procesos</li>
+                        <li>O usa el botón "Cargar Ejemplo" para ver los datos de la imagen</li>
+                        <li>Haz clic en "Simular Procesos" para ejecutar el algoritmo</li>
+                    </ol>
+                    <p style="margin-top: 20px;">
+                        <small>El archivo YAML debe contener una lista de procesos con: nombre, tiempo de CPU y tiempo de llegada</small>
+                    </p>
+                </div>
+            `;
+            
+            container.insertBefore(welcomeMessage, container.firstChild);
+        }
+    }
+
+    /**
+     * Limpia todos los resultados y reinicia el estado
+     */
+    reset() {
+        this.currentProcesses = [];
+        this.simulationResult = null;
+        
+        // Limpiar visualizaciones
+        this.ganttChart.clearChart();
+        
+        // Limpiar tabla
+        const tableBody = document.querySelector('#processTable tbody');
+        if (tableBody) {
+            tableBody.innerHTML = '';
+        }
+        
+        // Limpiar cola de listos
+        const queueDisplay = document.getElementById('readyQueueDisplay');
+        if (queueDisplay) {
+            queueDisplay.innerHTML = '';
+        }
+        
+        // Limpiar estadísticas
+        document.getElementById('avgResponseTime').textContent = '-';
+        document.getElementById('avgWaitTime').textContent = '-';
+        
+        this.showSuccess('Simulador reiniciado');
+    }
+
+    /**
+     * Exporta los resultados como JSON
+     */
+    exportResults() {
+        if (!this.simulationResult) {
+            this.showError('No hay resultados para exportar');
+            return;
+        }
+
+        const data = {
+            algorithm: 'FCFS',
+            timestamp: new Date().toISOString(),
+            processes: this.simulationResult.processes,
+            statistics: this.simulationResult.statistics,
+            timeline: this.simulationResult.timeline
+        };
+
+        const jsonString = JSON.stringify(data, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'simulacion_fcfs_resultados.json';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        URL.revokeObjectURL(url);
+        this.showSuccess('Resultados exportados exitosamente');
+    }
+}
+
+// Inicializar el simulador cuando se carga la página
+document.addEventListener('DOMContentLoaded', () => {
+    try {
+        window.simulator = new ProcessSimulator();
+        console.log('Simulador de Procesos FCFS iniciado correctamente');
+    } catch (error) {
+        console.error('Error al iniciar el simulador:', error);
+        alert('Error al iniciar el simulador: ' + error.message);
+    }
+});
+
+// Función global para descargar el ejemplo YAML
+function downloadExampleYAML() {
+    if (window.simulator && window.simulator.yamlParser) {
+        window.simulator.yamlParser.downloadExampleYAML();
+    }
+}
