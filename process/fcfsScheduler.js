@@ -78,8 +78,12 @@ class FCFSScheduler {
                 
                 // Marcar tiempo de inicio
                 executingProcess.startTime = currentTime;
-                executingProcess.responseTime = currentTime - executingProcess.arrivalTime;
-                executingProcess.waitTime = executingProcess.responseTime;
+                // Tiempo de espera = tiempo de inicio - tiempo de llegada
+                executingProcess.waitTime = currentTime - executingProcess.arrivalTime;
+                
+                console.log(`Proceso ${executingProcess.name} inicia en tiempo ${currentTime}:`);
+                console.log(`  - Llegada: ${executingProcess.arrivalTime}`);
+                console.log(`  - Tiempo de espera: ${executingProcess.waitTime}`);
             }
 
             // Ejecutar proceso actual si existe
@@ -96,6 +100,13 @@ class FCFSScheduler {
                 // Si el proceso termina
                 if (executionTimeRemaining === 0) {
                     executingProcess.finishTime = currentTime + 1;
+                    // Tiempo de retorno = tiempo de finalización - tiempo de llegada
+                    executingProcess.responseTime = executingProcess.finishTime - executingProcess.arrivalTime;
+                    
+                    console.log(`Proceso ${executingProcess.name} termina en tiempo ${executingProcess.finishTime}:`);
+                    console.log(`  - Tiempo de retorno (TR): ${executingProcess.responseTime}`);
+                    console.log(`  - Tiempo de espera (TE): ${executingProcess.waitTime}`);
+                    
                     executingProcess = null;
                 }
             }
@@ -170,19 +181,12 @@ class FCFSScheduler {
             return;
         }
 
-        // Calcular tiempo de turnaround para cada proceso
-        completedProcesses.forEach(process => {
-            process.turnaroundTime = process.finishTime - process.arrivalTime;
-        });
-
-        // Calcular promedios
-        const totalResponseTime = completedProcesses.reduce((sum, p) => sum + p.responseTime, 0);
+        // Calcular promedios (responseTime ya contiene el turnaround time)
+        const totalTurnaroundTime = completedProcesses.reduce((sum, p) => sum + p.responseTime, 0);
         const totalWaitTime = completedProcesses.reduce((sum, p) => sum + p.waitTime, 0);
-        const totalTurnaroundTime = completedProcesses.reduce((sum, p) => sum + p.turnaroundTime, 0);
 
-        const averageResponseTime = totalResponseTime / completedProcesses.length;
-        const averageWaitTime = totalWaitTime / completedProcesses.length;
         const averageTurnaroundTime = totalTurnaroundTime / completedProcesses.length;
+        const averageWaitTime = totalWaitTime / completedProcesses.length;
 
         // Calcular throughput
         const simulationEndTime = Math.max(...completedProcesses.map(p => p.finishTime));
@@ -194,7 +198,7 @@ class FCFSScheduler {
         const cpuUtilization = (totalCpuTime / simulationEndTime) * 100;
 
         this.statistics = {
-            averageResponseTime: Number(averageResponseTime.toFixed(2)),
+            averageResponseTime: Number(averageTurnaroundTime.toFixed(2)), // TR = Turnaround Time
             averageWaitTime: Number(averageWaitTime.toFixed(2)),
             averageTurnaroundTime: Number(averageTurnaroundTime.toFixed(2)),
             throughput: Number(throughput.toFixed(2)),

@@ -196,11 +196,6 @@ class GanttChart {
      * @returns {Object} - Información de ejecución
      */
     getProcessExecutionAtTime(process, time) {
-        // Debug: Log para P1
-        if (process.id === 1 && time <= 10) {
-            console.log(`P1 en tiempo ${time}: startTime=${process.startTime}, finishTime=${process.finishTime}`);
-        }
-        
         if (typeof process.startTime !== 'number' || typeof process.finishTime !== 'number') {
             return { isExecuting: false };
         }
@@ -314,11 +309,15 @@ class GanttChart {
      * @returns {number} - Tiempo promedio
      */
     getAverageResponseTime() {
-        const completedProcesses = this.processes.filter(p => p.responseTime !== null);
-        if (completedProcesses.length === 0) return 0;
+        const completedProcesses = this.processes.filter(p => 
+            typeof p.responseTime === 'number' && p.responseTime !== null
+        );
+        if (completedProcesses.length === 0) return '0.0';
         
         const total = completedProcesses.reduce((sum, p) => sum + p.responseTime, 0);
-        return (total / completedProcesses.length).toFixed(1);
+        const average = total / completedProcesses.length;
+        console.log('Cálculo TR (Turnaround) promedio:', completedProcesses.map(p => `${p.name}:${p.responseTime}`), 'Total:', total, 'Promedio:', average);
+        return average.toFixed(1);
     }
     
     /**
@@ -326,11 +325,15 @@ class GanttChart {
      * @returns {number} - Tiempo promedio
      */
     getAverageWaitTime() {
-        const completedProcesses = this.processes.filter(p => p.waitTime !== null);
-        if (completedProcesses.length === 0) return 0;
+        const completedProcesses = this.processes.filter(p => 
+            typeof p.waitTime === 'number' && p.waitTime !== null
+        );
+        if (completedProcesses.length === 0) return '0.0';
         
         const total = completedProcesses.reduce((sum, p) => sum + p.waitTime, 0);
-        return (total / completedProcesses.length).toFixed(1);
+        const average = total / completedProcesses.length;
+        console.log('Cálculo TE promedio:', completedProcesses.map(p => `${p.name}:${p.waitTime}`), 'Total:', total, 'Promedio:', average);
+        return average.toFixed(1);
     }
 
     /**
