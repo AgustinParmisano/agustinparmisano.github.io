@@ -9,6 +9,7 @@ class ProcessSimulator {
         this.fcfsScheduler = new FCFSScheduler();
         this.sjfScheduler = new SJFScheduler();
         this.roundRobinScheduler = new RoundRobinScheduler();
+        this.priorityScheduler = new PriorityScheduler([]);
         this.ganttChart = new GanttChart();
         
         this.currentProcesses = [];
@@ -79,6 +80,14 @@ class ProcessSimulator {
         if (loadRRExampleBtn) {
             loadRRExampleBtn.addEventListener('click', () => {
                 this.loadExample('rr');
+            });
+        }
+
+        // Botón para cargar ejemplo Priority
+        const loadPriorityExampleBtn = document.getElementById('loadPriorityExample');
+        if (loadPriorityExampleBtn) {
+            loadPriorityExampleBtn.addEventListener('click', () => {
+                this.loadExample('priority');
             });
         }
 
@@ -165,6 +174,8 @@ class ProcessSimulator {
                 algorithmTitle.textContent = 'Algoritmo SJF (Shortest Job First)';
             } else if (algorithm === 'rr') {
                 algorithmTitle.textContent = 'Algoritmo Round Robin';
+            } else if (algorithm === 'priority') {
+                algorithmTitle.textContent = 'Algoritmo Priority Scheduling';
             }
         }
         
@@ -175,6 +186,16 @@ class ProcessSimulator {
                 quantumInput.style.display = 'flex';
             } else {
                 quantumInput.style.display = 'none';
+            }
+        }
+        
+        // Mostrar/ocultar columna de prioridad
+        const priorityColumn = document.getElementById('priorityColumn');
+        if (priorityColumn) {
+            if (algorithm === 'priority') {
+                priorityColumn.style.display = 'table-cell';
+            } else {
+                priorityColumn.style.display = 'none';
             }
         }
         
@@ -202,6 +223,8 @@ class ProcessSimulator {
                 this.currentProcesses = this.yamlParser.loadSJFExampleProcesses();
             } else if (algorithm === 'rr') {
                 this.currentProcesses = this.yamlParser.loadRoundRobinExampleProcesses();
+            } else if (algorithm === 'priority') {
+                this.currentProcesses = this.yamlParser.loadPriorityExampleProcesses();
             } else {
                 this.currentProcesses = this.yamlParser.loadExampleProcesses();
             }
@@ -246,6 +269,8 @@ class ProcessSimulator {
                 scheduler = this.roundRobinScheduler;
                 const quantumValue = document.getElementById('quantumValue')?.value || 2;
                 this.simulationResult = scheduler.schedule(this.currentProcesses, parseInt(quantumValue));
+            } else if (this.selectedAlgorithm === 'priority') {
+                this.simulationResult = runPriorityScheduling(this.currentProcesses);
             } else {
                 scheduler = this.fcfsScheduler;
                 this.simulationResult = scheduler.schedule(this.currentProcesses);
@@ -294,10 +319,18 @@ class ProcessSimulator {
 
         processes.forEach(process => {
             const row = document.createElement('tr');
+            
+            // Determinar si mostrar columna de prioridad
+            const showPriority = this.selectedAlgorithm === 'priority';
+            const priorityCell = showPriority && process.priority !== undefined ? 
+                `<td>${process.priority}</td>` : 
+                (showPriority ? '<td>-</td>' : '');
+            
             row.innerHTML = `
                 <td>${process.name}</td>
                 <td>${process.cpuTime}</td>
                 <td>${process.arrivalTime}</td>
+                ${priorityCell}
                 <td>-</td>
                 <td>-</td>
                 <td>-</td>

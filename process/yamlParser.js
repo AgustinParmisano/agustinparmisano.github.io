@@ -39,6 +39,7 @@ class YAMLParser {
                     name: process.name,
                     cpuTime: process.cpu_time,
                     arrivalTime: process.arrival_time,
+                    priority: process.priority || null, // Agregar soporte para prioridad
                     // Campos calculados que se llenarán después
                     startTime: null,
                     finishTime: null,
@@ -290,6 +291,59 @@ quantum: 3
     loadRoundRobinExampleProcesses() {
         const rrExampleYAML = this.getRoundRobinExampleYAML();
         return this.parseYAML(rrExampleYAML);
+    }
+
+    /**
+     * Genera un ejemplo de YAML específico para Priority Scheduling
+     * @returns {string} - Contenido YAML de ejemplo para Priority
+     */
+    getPriorityExampleYAML() {
+        return `# Ejemplo de archivo YAML para Priority Scheduling
+# Los números de prioridad menores indican mayor prioridad
+
+processes:
+  - id: 1
+    name: "P1"
+    cpu_time: 8
+    arrival_time: 0
+    priority: 3
+    
+  - id: 2
+    name: "P2"
+    cpu_time: 4
+    arrival_time: 1
+    priority: 1
+    
+  - id: 3
+    name: "P3"
+    cpu_time: 9
+    arrival_time: 2
+    priority: 4
+    
+  - id: 4
+    name: "P4"
+    cpu_time: 5
+    arrival_time: 3
+    priority: 2
+
+# Configuración para Priority Scheduling
+algorithm: "Priority Scheduling"
+preemptive: false  # Implementación no preemptiva
+
+# Orden de ejecución esperado basado en prioridades:
+# P1 (llega en 0, prioridad 3) - se ejecuta primero porque no hay otros
+# P2 (llega en 1, prioridad 1) - mayor prioridad, pero P1 ya está ejecutando
+# Después de P1: P2 (prioridad 1), luego P4 (prioridad 2), finalmente P3 (prioridad 4)
+`;
+    }
+
+    /**
+     * Carga procesos desde el ejemplo Priority Scheduling
+     * @returns {Array} - Lista de procesos del ejemplo Priority
+     */
+    loadPriorityExampleProcesses() {
+        const priorityExampleYAML = this.getPriorityExampleYAML();
+        return this.parseYAML(priorityExampleYAML);
     }
 }
 

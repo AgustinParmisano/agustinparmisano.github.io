@@ -21,6 +21,7 @@
                     <option value="fcfs">FCFS (First Come, First Served)</option>
                     <option value="sjf">SJF (Shortest Job First)</option>
                     <option value="rr">Round Robin</option>
+                    <option value="priority">Priority Scheduling</option>
                 </select>
             </div>
             
@@ -39,6 +40,7 @@
                 <button id="loadExample">Cargar Ejemplo FCFS</button>
                 <button id="loadSJFExample">Cargar Ejemplo SJF</button>
                 <button id="loadRRExample">Cargar Ejemplo Round Robin</button>
+                <button id="loadPriorityExample">Cargar Ejemplo Priority</button>
             </div>
             
             <button id="simulate">Simular Procesos</button>
@@ -53,6 +55,7 @@
                             <th>Proceso</th>
                             <th>CPU</th>
                             <th>Llegada</th>
+                            <th id="priorityColumn" style="display: none;">Prioridad</th>
                             <th>Tiempo Inicio</th>
                             <th>Tiempo Fin</th>
                             <th>Tiempo Respuesta</th>
@@ -90,7 +93,10 @@
     <script src="fcfsScheduler.js"></script>
     <script src="sjfScheduler.js"></script>
     <script src="roundRobinScheduler.js"></script>
+    <script src="priorityScheduler.js"></script>
     <script src="ganttChart.js"></script>
+    <script src="priorityScheduler_simple.js"></script>
+    <script src="debug_priority.js"></script>
     <script src="main.js"></script>
 </body>
 </html>

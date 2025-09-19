@@ -129,6 +129,12 @@ class GanttChart {
         
         // Columnas fijas
         const headers = ['Procesos', 'CPU', 'Llegada'];
+        
+        // Agregar columna de Prioridad solo para algoritmo Priority
+        if (this.algorithm === 'PRIORITY') {
+            headers.push('Prioridad');
+        }
+        
         headers.forEach(text => {
             const th = document.createElement('th');
             th.textContent = text;
@@ -182,6 +188,14 @@ class GanttChart {
         arrivalCell.textContent = process.arrivalTime;
         arrivalCell.className = 'gantt-cell-fixed';
         row.appendChild(arrivalCell);
+        
+        // Columna Prioridad (solo para Priority Scheduling)
+        if (this.algorithm === 'PRIORITY') {
+            const priorityCell = document.createElement('td');
+            priorityCell.textContent = process.priority !== undefined ? process.priority : '-';
+            priorityCell.className = 'gantt-cell-fixed';
+            row.appendChild(priorityCell);
+        }
         
         // Celdas de tiempo
         for (let time = 0; time < this.maxTime; time++) {
@@ -339,7 +353,8 @@ class GanttChart {
         queueLabelCell.textContent = 'Ready Queue';
         queueLabelCell.className = 'gantt-cell-fixed';
         queueLabelCell.style.fontWeight = 'bold';
-        queueLabelCell.colSpan = 2;
+        // Ajustar colspan según si hay columna de prioridad
+        queueLabelCell.colSpan = this.algorithm === 'PRIORITY' ? 3 : 2;
         row.appendChild(queueLabelCell);
         
         // Celdas de tiempo con procesos en cola - Solo mostrar la secuencia inicial
@@ -571,10 +586,18 @@ class GanttChart {
 
         processes.forEach(process => {
             const row = document.createElement('tr');
+            
+            // Determinar si mostrar columna de prioridad
+            const showPriority = this.algorithm === 'PRIORITY';
+            const priorityCell = showPriority && process.priority !== undefined ? 
+                `<td>${process.priority}</td>` : 
+                (showPriority ? '<td>-</td>' : '');
+            
             row.innerHTML = `
                 <td>${process.name}</td>
                 <td>${process.cpuTime}</td>
                 <td>${process.arrivalTime}</td>
+                ${priorityCell}
                 <td>${process.startTime !== null ? process.startTime : '-'}</td>
                 <td>${process.finishTime !== null ? process.finishTime : '-'}</td>
                 <td>${process.responseTime !== null ? process.responseTime : '-'}</td>
