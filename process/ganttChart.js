@@ -26,9 +26,10 @@ class GanttChart {
 
     /**
      * Renderiza el diagrama de Gantt completo
-     * @param {Object} schedulerResult - Resultado del scheduler FCFS
+     * @param {Object} schedulerResult - Resultado del scheduler
+     * @param {string} algorithm - Algoritmo utilizado (para mostrar en la etiqueta)
      */
-    render(schedulerResult) {
+    render(schedulerResult, algorithm = 'UNKNOWN') {
         if (!schedulerResult || !schedulerResult.processes || !schedulerResult.timeline) {
             this.clearChart();
             return;
@@ -36,6 +37,7 @@ class GanttChart {
 
         this.processes = schedulerResult.processes;
         this.timeline = schedulerResult.timeline;
+        this.algorithm = algorithm.toUpperCase();
         
         // Calcular tiempo máximo
         this.maxTime = Math.max(
@@ -227,7 +229,7 @@ class GanttChart {
         
         // Celda de etiqueta
         const labelCell = document.createElement('td');
-        labelCell.textContent = 'FCFS';
+        labelCell.textContent = this.algorithm || 'UNKNOWN';
         labelCell.className = 'gantt-cell-process';
         labelCell.style.fontWeight = 'bold';
         row.appendChild(labelCell);

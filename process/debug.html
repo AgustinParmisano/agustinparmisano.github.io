@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug SJF</title>
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+</head>
+<body>
+    <h1>Debug SJF Algorithm</h1>
+    <button id="testBtn">Ejecutar Prueba SJF</button>
+    <div id="output"></div>
+
+    <script src="yamlParser.js"></script>
+    <script src="sjfScheduler.js"></script>
+    <script>
+        document.getElementById('testBtn').addEventListener('click', function() {
+            const output = document.getElementById('output');
+            output.innerHTML = '<p>Ejecutando prueba SJF...</p>';
+            
+            try {
+                // Datos de prueba
+                const testProcesses = [
+                    { id: 1, name: "P1", cpuTime: 6, arrivalTime: 0 },
+                    { id: 2, name: "P2", cpuTime: 8, arrivalTime: 0 },
+                    { id: 3, name: "P3", cpuTime: 7, arrivalTime: 0 },
+                    { id: 4, name: "P4", cpuTime: 3, arrivalTime: 0 }
+                ];
+                
+                console.log('Procesos de entrada:', testProcesses);
+                
+                // Crear scheduler
+                const sjfScheduler = new SJFScheduler();
+                
+                // Ejecutar algoritmo
+                const result = sjfScheduler.schedule(testProcesses);
+                
+                console.log('Resultado SJF:', result);
+                
+                // Verificar orden
+                const order = [];
+                let currentProcess = null;
+                
+                for (const entry of result.timeline) {
+                    if (currentProcess !== entry.processId) {
+                        order.push(entry.processId);
+                        currentProcess = entry.processId;
+                    }
+                }
+                
+                console.log('Orden de ejecución:', order);
+                
+                // Mostrar resultados
+                output.innerHTML = `
+                    <h3>✅ Prueba SJF Exitosa</h3>
+                    <p><strong>Orden de ejecución:</strong> ${order.join(' → ')}</p>
+                    <p><strong>Esperado:</strong> 4 → 1 → 3 → 2</p>
+                    <p><strong>Timeline entries:</strong> ${result.timeline.length}</p>
+                    <p><strong>Procesos terminados:</strong> ${result.processes.filter(p => p.finishTime !== null).length}</p>
+                    <h4>Detalles de procesos:</h4>
+                    <ul>
+                        ${result.processes.map(p => 
+                            `<li>${p.name}: Inicio=${p.startTime}, Fin=${p.finishTime}, TE=${p.waitTime}, TR=${p.responseTime}</li>`
+                        ).join('')}
+                    </ul>
+                `;
+                
+            } catch (error) {
+                console.error('Error en la prueba:', error);
+                output.innerHTML = `<p style="color: red;">❌ Error: ${error.message}</p>`;
+            }
+        });
+    </script>
+</body>
+</html>

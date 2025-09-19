@@ -1,0 +1,37 @@
+# Archivo YAML de ejemplo para el simulador SJF
+# Datos optimizados para mostrar las diferencias con FCFS
+
+processes:
+  - id: 1
+    name: "P1"
+    cpu_time: 6
+    arrival_time: 0
+    
+  - id: 2
+    name: "P2"
+    cpu_time: 8
+    arrival_time: 0
+    
+  - id: 3
+    name: "P3"
+    cpu_time: 7
+    arrival_time: 0
+    
+  - id: 4
+    name: "P4"
+    cpu_time: 3
+    arrival_time: 0
+
+# Con SJF (Shortest Job First), el orden de ejecución será:
+# P4 (3 unidades) -> P1 (6 unidades) -> P3 (7 unidades) -> P2 (8 unidades)
+#
+# Con FCFS (First Come, First Served), el orden sería:
+# P1 (6 unidades) -> P2 (8 unidades) -> P3 (7 unidades) -> P4 (3 unidades)
+#
+# Esto muestra claramente las diferencias entre ambos algoritmos:
+# - SJF minimiza el tiempo de espera promedio
+# - FCFS puede causar el "efecto convoy" cuando procesos largos ejecutan primero
+
+# Configuración del algoritmo
+algorithm: "SJF"
+description: "Simulación del algoritmo Shortest Job First (no preemptivo)"

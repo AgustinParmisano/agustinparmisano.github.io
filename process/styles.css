@@ -53,6 +53,40 @@ header h2 {
     flex-wrap: wrap;
 }
 
+/* Selector de algoritmo */
+.algorithm-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 200px;
+}
+
+.algorithm-selector label {
+    font-weight: bold;
+    color: #555;
+}
+
+select {
+    padding: 10px;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    background: white;
+    color: #333;
+    font-size: 16px;
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+}
+
+select:focus {
+    border-color: #667eea;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+select:hover {
+    border-color: #764ba2;
+}
+
 .file-input {
     display: flex;
     flex-direction: column;
@@ -71,6 +105,22 @@ input[type="file"] {
     background: #fafafa;
 }
 
+/* Botones de ejemplo */
+.example-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.example-buttons button {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    min-width: 150px;
+}
+
+.example-buttons button:hover {
+    background: linear-gradient(135deg, #45a049 0%, #3d8b40 100%);
+}
+
 button {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
@@ -79,12 +129,27 @@ button {
     border-radius: 5px;
     cursor: pointer;
     font-size: 16px;
-    transition: transform 0.2s ease;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
 }
 
 /* Sección de resultados */
@@ -390,6 +455,20 @@ tr:hover {
     .input-section {
         flex-direction: column;
         align-items: stretch;
+    }
+    
+    .algorithm-selector {
+        min-width: auto;
+    }
+    
+    .example-buttons {
+        justify-content: center;
+    }
+    
+    .example-buttons button {
+        min-width: 120px;
+        font-size: 14px;
+        padding: 10px 16px;
     }
     
     .process-label {

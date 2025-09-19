@@ -1,8 +1,9 @@
 /**
- * Módulo para implementar el algoritmo de planificación FCFS (First Come, First Served)
+ * Módulo para implementar el algoritmo de planificación SJF (Shortest Job First)
+ * Implementación no preemptiva - el proceso más corto disponible es seleccionado para ejecutar
  */
 
-class FCFSScheduler {
+class SJFScheduler {
     constructor() {
         this.processes = [];
         this.timeline = [];
@@ -11,7 +12,7 @@ class FCFSScheduler {
     }
 
     /**
-     * Ejecuta el algoritmo FCFS sobre una lista de procesos
+     * Ejecuta el algoritmo SJF sobre una lista de procesos
      * @param {Array} processes - Lista de procesos a planificar
      * @returns {Object} - Resultado de la simulación
      */
@@ -23,17 +24,17 @@ class FCFSScheduler {
         // Limpiar estado anterior
         this.reset();
 
-        // Copiar, inicializar campos calculados y ordenar procesos por tiempo de llegada
+        // Copiar procesos y inicializar campos calculados
         this.processes = [...processes].map(process => ({
             ...process,
             startTime: null,
             finishTime: null,
             responseTime: null,
             waitTime: null
-        })).sort((a, b) => a.arrivalTime - b.arrivalTime);
+        }));
 
-        // Ejecutar simulación FCFS
-        this.simulateFCFS();
+        // Ejecutar simulación SJF
+        this.simulateSJF();
 
         // Calcular estadísticas
         this.calculateStatistics();
@@ -47,39 +48,44 @@ class FCFSScheduler {
     }
 
     /**
-     * Simula la ejecución del algoritmo FCFS
+     * Simula la ejecución del algoritmo SJF (no preemptivo)
      */
-    simulateFCFS() {
-        console.log('Iniciando simulación FCFS con procesos:', this.processes);
+    simulateSJF() {
+        console.log('=== Iniciando simulación SJF ===');
+        console.log('Procesos iniciales:', this.processes.map(p => `${p.name}(CPU:${p.cpuTime}, Arr:${p.arrivalTime})`));
         
         let currentTime = 0;
         let executingProcess = null;
         let executionTimeRemaining = 0;
         
-        // Cola de procesos listos (en orden de llegada)
-        const readyQueue = [];
-        
         // Encontrar el tiempo máximo necesario
         const totalCpuTime = this.processes.reduce((sum, p) => sum + p.cpuTime, 0);
         const maxTime = totalCpuTime + Math.max(...this.processes.map(p => p.arrivalTime));
         console.log('Tiempo máximo de simulación:', maxTime);
+        console.log('Tiempo total de CPU:', totalCpuTime);
 
         // Simular cada unidad de tiempo
         for (currentTime = 0; currentTime < maxTime; currentTime++) {
             console.log(`\n--- Tiempo ${currentTime} ---`);
-            console.log('Ready queue al inicio:', readyQueue.map(p => p.name));
-            console.log('Proceso ejecutándose:', executingProcess ? executingProcess.name : 'ninguno');
-            // Agregar procesos que llegan en este tiempo a la cola
-            this.processes.forEach(process => {
-                if (process.arrivalTime === currentTime && process.startTime === null && !process.inQueue) {
-                    readyQueue.push(process);
-                    process.inQueue = true; // Marcar como agregado a la cola
-                }
-            });
-
-            // Si no hay proceso ejecutándose, tomar el siguiente de la cola
-            if (!executingProcess && readyQueue.length > 0) {
-                executingProcess = readyQueue.shift(); // FCFS: primero en llegar, primero en servirse
+            
+            // Obtener procesos disponibles (que han llegado y no han sido ejecutados)
+            const readyProcesses = this.getReadyProcesses(currentTime);
+            console.log('Procesos listos:', readyProcesses.map(p => `${p.name}(${p.cpuTime})`));
+            
+            // Si no hay proceso ejecutándose, seleccionar el próximo usando SJF
+            if (!executingProcess && readyProcesses.length > 0) {
+                // SJF: seleccionar el proceso con menor tiempo de CPU
+                // En caso de empate, seleccionar el que llegó primero (FCFS como criterio de desempate)
+                executingProcess = readyProcesses.reduce((shortest, current) => {
+                    if (current.cpuTime < shortest.cpuTime) {
+                        return current;
+                    } else if (current.cpuTime === shortest.cpuTime) {
+                        // Desempate por orden de llegada (FCFS)
+                        return current.arrivalTime < shortest.arrivalTime ? current : shortest;
+                    }
+                    return shortest;
+                });
+                
                 executionTimeRemaining = executingProcess.cpuTime;
                 
                 // Marcar tiempo de inicio
@@ -89,6 +95,7 @@ class FCFSScheduler {
                 
                 console.log(`Proceso ${executingProcess.name} inicia en tiempo ${currentTime}:`);
                 console.log(`  - Llegada: ${executingProcess.arrivalTime}`);
+                console.log(`  - CPU Time: ${executingProcess.cpuTime}`);
                 console.log(`  - Tiempo de espera: ${executingProcess.waitTime}`);
             }
 
@@ -118,29 +125,27 @@ class FCFSScheduler {
             }
 
             // Guardar estado de la cola para visualización
-            const queueForDisplay = readyQueue.map(p => p.id);
+            // Mostrar procesos listos ordenados por tiempo de CPU (más corto primero)
+            const queueForDisplay = readyProcesses
+                .filter(p => !executingProcess || p.id !== executingProcess.id)
+                .sort((a, b) => {
+                    if (a.cpuTime === b.cpuTime) {
+                        return a.arrivalTime - b.arrivalTime; // Desempate por llegada
+                    }
+                    return a.cpuTime - b.cpuTime;
+                })
+                .map(p => p.id);
+                
             if (queueForDisplay.length > 0) {
                 this.readyQueue[currentTime] = queueForDisplay;
             }
 
             // Terminar si todos los procesos han terminado
             const allFinished = this.processes.every(p => p.finishTime !== null);
-            if (allFinished && !executingProcess && readyQueue.length === 0) {
+            if (allFinished && !executingProcess) {
                 break;
             }
         }
-    }
-
-    /**
-     * Obtiene el siguiente proceso listo para ejecutar (FCFS)
-     * @param {number} currentTime - Tiempo actual
-     * @returns {Object|null} - Siguiente proceso o null
-     */
-    getNextReadyProcess(currentTime) {
-        return this.processes.find(p => 
-            p.arrivalTime <= currentTime && 
-            p.startTime === null
-        ) || null;
     }
 
     /**
@@ -148,26 +153,11 @@ class FCFSScheduler {
      * @param {number} currentTime - Tiempo actual
      * @returns {Array} - Lista de procesos listos
      */
-    getAllReadyProcesses(currentTime) {
+    getReadyProcesses(currentTime) {
         return this.processes.filter(p => 
             p.arrivalTime <= currentTime && 
             p.startTime === null
         );
-    }
-
-    /**
-     * Obtiene el estado de la cola de listos en un momento dado
-     * @param {number} currentTime - Tiempo actual
-     * @param {Object} executingProcess - Proceso en ejecución
-     * @returns {Array} - Estado de la cola
-     */
-    getReadyQueueState(currentTime, executingProcess) {
-        const readyProcesses = this.getAllReadyProcesses(currentTime);
-        
-        // Filtrar el proceso en ejecución si existe
-        return readyProcesses
-            .filter(p => !executingProcess || p.id !== executingProcess.id)
-            .map(p => p.name);
     }
 
     /**
@@ -300,4 +290,4 @@ class FCFSScheduler {
 }
 
 // Exportar para uso en otros módulos
-window.FCFSScheduler = FCFSScheduler;
+window.SJFScheduler = SJFScheduler;

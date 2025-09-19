@@ -6,11 +6,13 @@
 class ProcessSimulator {
     constructor() {
         this.yamlParser = new YAMLParser();
-        this.scheduler = new FCFSScheduler();
+        this.fcfsScheduler = new FCFSScheduler();
+        this.sjfScheduler = new SJFScheduler();
         this.ganttChart = new GanttChart();
         
         this.currentProcesses = [];
         this.simulationResult = null;
+        this.selectedAlgorithm = 'fcfs'; // Algoritmo por defecto
         
         this.initialize();
     }
@@ -47,11 +49,27 @@ class ProcessSimulator {
             });
         }
 
-        // Botón para cargar ejemplo
+        // Selector de algoritmo
+        const algorithmSelect = document.getElementById('algorithmSelect');
+        if (algorithmSelect) {
+            algorithmSelect.addEventListener('change', (e) => {
+                this.handleAlgorithmChange(e.target.value);
+            });
+        }
+
+        // Botón para cargar ejemplo FCFS
         const loadExampleBtn = document.getElementById('loadExample');
         if (loadExampleBtn) {
             loadExampleBtn.addEventListener('click', () => {
-                this.loadExample();
+                this.loadExample('fcfs');
+            });
+        }
+
+        // Botón para cargar ejemplo SJF
+        const loadSJFExampleBtn = document.getElementById('loadSJFExample');
+        if (loadSJFExampleBtn) {
+            loadSJFExampleBtn.addEventListener('click', () => {
+                this.loadExample('sjf');
             });
         }
 
@@ -123,17 +141,57 @@ class ProcessSimulator {
     }
 
     /**
-     * Carga el ejemplo de procesos
+     * Maneja el cambio de algoritmo
+     * @param {string} algorithm - Algoritmo seleccionado
      */
-    loadExample() {
+    handleAlgorithmChange(algorithm) {
+        this.selectedAlgorithm = algorithm;
+        
+        // Actualizar título
+        const algorithmTitle = document.getElementById('algorithmTitle');
+        if (algorithmTitle) {
+            if (algorithm === 'fcfs') {
+                algorithmTitle.textContent = 'Algoritmo FCFS (First Come, First Served)';
+            } else if (algorithm === 'sjf') {
+                algorithmTitle.textContent = 'Algoritmo SJF (Shortest Job First)';
+            }
+        }
+        
+        // Limpiar resultados anteriores si existen
+        if (this.simulationResult) {
+            this.reset();
+        }
+        
+        this.showSuccess(`Algoritmo cambiado a ${algorithm.toUpperCase()}`);
+    }
+
+    /**
+     * Carga el ejemplo de procesos
+     * @param {string} algorithmType - Tipo de algoritmo para el ejemplo
+     */
+    loadExample(algorithmType = null) {
         try {
             this.showLoading('Cargando ejemplo...');
             
-            // Cargar procesos del ejemplo
-            this.currentProcesses = this.yamlParser.loadExampleProcesses();
+            // Usar el algoritmo especificado o el seleccionado actualmente
+            const algorithm = algorithmType || this.selectedAlgorithm;
+            
+            // Cargar procesos del ejemplo según el algoritmo
+            if (algorithm === 'sjf') {
+                this.currentProcesses = this.yamlParser.loadSJFExampleProcesses();
+            } else {
+                this.currentProcesses = this.yamlParser.loadExampleProcesses();
+            }
+            
+            // Sincronizar selector de algoritmo
+            const algorithmSelect = document.getElementById('algorithmSelect');
+            if (algorithmSelect && algorithmSelect.value !== algorithm) {
+                algorithmSelect.value = algorithm;
+                this.handleAlgorithmChange(algorithm);
+            }
             
             this.hideLoading();
-            this.showSuccess(`Ejemplo cargado exitosamente. ${this.currentProcesses.length} procesos cargados.`);
+            this.showSuccess(`Ejemplo ${algorithm.toUpperCase()} cargado exitosamente. ${this.currentProcesses.length} procesos cargados.`);
             
             // Mostrar procesos en la tabla
             this.updateProcessTable(this.currentProcesses);
@@ -145,7 +203,7 @@ class ProcessSimulator {
     }
 
     /**
-     * Ejecuta la simulación FCFS
+     * Ejecuta la simulación del algoritmo seleccionado
      */
     runSimulation() {
         if (!this.currentProcesses || this.currentProcesses.length === 0) {
@@ -154,16 +212,23 @@ class ProcessSimulator {
         }
 
         try {
-            this.showLoading('Ejecutando simulación...');
+            this.showLoading(`Ejecutando simulación ${this.selectedAlgorithm.toUpperCase()}...`);
             
-            // Ejecutar algoritmo FCFS
-            this.simulationResult = this.scheduler.schedule(this.currentProcesses);
+            // Ejecutar algoritmo seleccionado
+            let scheduler;
+            if (this.selectedAlgorithm === 'sjf') {
+                scheduler = this.sjfScheduler;
+            } else {
+                scheduler = this.fcfsScheduler;
+            }
+            
+            this.simulationResult = scheduler.schedule(this.currentProcesses);
             
             // Actualizar todas las visualizaciones
             this.updateAllDisplays();
             
             this.hideLoading();
-            this.showSuccess('Simulación completada exitosamente');
+            this.showSuccess(`Simulación ${this.selectedAlgorithm.toUpperCase()} completada exitosamente`);
             
         } catch (error) {
             this.hideLoading();
@@ -178,7 +243,7 @@ class ProcessSimulator {
         if (!this.simulationResult) return;
 
         // Actualizar diagrama de Gantt
-        this.ganttChart.render(this.simulationResult);
+        this.ganttChart.render(this.simulationResult, this.selectedAlgorithm);
         
         // Actualizar tabla de procesos
         this.ganttChart.updateProcessTable(this.simulationResult.processes);
@@ -307,11 +372,12 @@ class ProcessSimulator {
             welcomeMessage.className = 'welcome-message';
             welcomeMessage.innerHTML = `
                 <div style="text-align: center; padding: 40px; color: #666;">
-                    <h3>¡Bienvenido al Simulador de Procesos FCFS!</h3>
+                    <h3>¡Bienvenido al Simulador de Algoritmos de Planificación!</h3>
                     <p>Para comenzar:</p>
                     <ol style="text-align: left; display: inline-block;">
+                        <li>Selecciona el algoritmo de planificación (FCFS o SJF)</li>
                         <li>Carga un archivo YAML con los procesos</li>
-                        <li>O usa el botón "Cargar Ejemplo" para ver los datos de la imagen</li>
+                        <li>O usa los botones de ejemplo para cargar datos de prueba</li>
                         <li>Haz clic en "Simular Procesos" para ejecutar el algoritmo</li>
                     </ol>
                     <p style="margin-top: 20px;">
@@ -363,7 +429,7 @@ class ProcessSimulator {
         }
 
         const data = {
-            algorithm: 'FCFS',
+            algorithm: this.selectedAlgorithm.toUpperCase(),
             timestamp: new Date().toISOString(),
             processes: this.simulationResult.processes,
             statistics: this.simulationResult.statistics,
@@ -376,7 +442,7 @@ class ProcessSimulator {
         
         const link = document.createElement('a');
         link.href = url;
-        link.download = 'simulacion_fcfs_resultados.json';
+        link.download = `simulacion_${this.selectedAlgorithm}_resultados.json`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

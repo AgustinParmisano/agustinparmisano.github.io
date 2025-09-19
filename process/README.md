@@ -1,13 +1,16 @@
-# Simulador de Procesos FCFS
+# Simulador de Algoritmos de Planificación de Procesos
 
-Un simulador interactivo del algoritmo de planificación de procesos **First Come, First Served (FCFS)** desarrollado con HTML, CSS y JavaScript vanilla.
+Un simulador interactivo de algoritmos de planificación de procesos que incluye **FCFS (First Come, First Served)** y **SJF (Shortest Job First)** desarrollado con HTML, CSS y JavaScript vanilla.
 
 ## 🚀 Características
 
-- **Algoritmo FCFS**: Implementación completa del algoritmo First Come, First Served
+- **Múltiples algoritmos**: Implementación completa de FCFS y SJF con selector interactivo
+- **Algoritmo FCFS**: First Come, First Served (no preemptivo)
+- **Algoritmo SJF**: Shortest Job First (no preemptivo) con desempate por orden de llegada
 - **Visualización de Gantt**: Diagrama de Gantt interactivo con colores diferenciados por proceso
 - **Carga de archivos YAML**: Soporte para cargar configuraciones de procesos desde archivos YAML
-- **Ejemplo incluido**: Datos de ejemplo basados en un caso de estudio real
+- **Ejemplos incluidos**: Datos de ejemplo específicos para cada algoritmo
+- **Comparación de algoritmos**: Ejemplos que muestran las diferencias entre FCFS y SJF
 - **Estadísticas detalladas**: Cálculo automático de tiempos de respuesta, espera y estadísticas promedio
 - **Cola de listos**: Visualización del estado de la cola de procesos listos por tiempo
 - **Interfaz responsive**: Diseño adaptable para diferentes tamaños de pantalla
@@ -20,18 +23,21 @@ process/
 ├── styles.css              # Estilos CSS para la interfaz
 ├── yamlParser.js           # Módulo para parsear archivos YAML
 ├── fcfsScheduler.js        # Implementación del algoritmo FCFS
+├── sjfScheduler.js         # Implementación del algoritmo SJF
 ├── ganttChart.js           # Generador de diagramas de Gantt
 ├── main.js                 # Módulo principal que integra todo
-├── ejemplo_procesos.yaml   # Archivo de ejemplo con datos de procesos
+├── ejemplo_fcfs.yaml       # Archivo de ejemplo para FCFS
+├── ejemplo_sjf.yaml        # Archivo de ejemplo para SJF
 └── README.md               # Este archivo
 ```
 
-## 🛠️ Instalación y Uso
+## 🔧 Instalación y Uso
 
 1. **Clona o descarga** los archivos del proyecto
 2. **Abre** `index.html` en tu navegador web
-3. **Carga un archivo YAML** con datos de procesos o usa el ejemplo incluido
-4. **Haz clic** en "Simular Procesos" para ejecutar el algoritmo
+3. **Selecciona el algoritmo** que deseas simular (FCFS o SJF)
+4. **Carga un archivo YAML** con datos de procesos o usa los ejemplos incluidos
+5. **Haz clic** en "Simular Procesos" para ejecutar el algoritmo
 
 ### Formato del archivo YAML
 
@@ -49,7 +55,7 @@ processes:
     
   # ... más procesos
 
-algorithm: "FCFS"
+algorithm: "FCFS"  # o "SJF"
 ```
 
 ### Campos requeridos:
@@ -57,20 +63,32 @@ algorithm: "FCFS"
 - `cpu_time`: Tiempo de CPU requerido (número entero positivo)
 - `arrival_time`: Tiempo de llegada (número entero >= 0)
 
-## 📊 Ejemplo de Datos
+## 📊 Ejemplos de Datos
 
-El simulador incluye un ejemplo basado en el siguiente caso:
+### Ejemplo FCFS
+El simulador incluye un ejemplo para FCFS basado en el siguiente caso:
 
 | Proceso | CPU | Llegada |
 |---------|-----|---------|
-| P1      | 9   | 0       |
-| P2      | 5   | 1       |
-| P3      | 3   | 2       |
-| P4      | 7   | 3       |
+| P1      | 4   | 0       |
+| P2      | 3   | 1       |
+| P3      | 2   | 3       |
+| P4      | 3   | 4       |
 
-**Resultados esperados:**
-- Tiempo de respuesta promedio: 8.0
-- Tiempo de espera promedio: 8.0
+### Ejemplo SJF
+También incluye un ejemplo optimizado para mostrar las diferencias con FCFS:
+
+| Proceso | CPU | Llegada |
+|---------|-----|---------|
+| P1      | 6   | 0       |
+| P2      | 8   | 0       |
+| P3      | 7   | 0       |
+| P4      | 3   | 0       |
+
+**Con SJF:** Orden de ejecución P4→P1→P3→P2 (minimiza tiempo de espera)  
+**Con FCFS:** Orden de ejecución P1→P2→P3→P4 (orden de llegada)
+
+Esto demuestra cómo SJF evita el "efecto convoy" que puede ocurrir en FCFS.
 
 ## 🎯 Funcionalidades
 
@@ -81,10 +99,11 @@ El simulador incluye un ejemplo basado en el siguiente caso:
 - **Estadísticas**: Métricas de rendimiento del algoritmo
 
 ### Interactividad
+- **Selector de algoritmo**: Cambio dinámico entre FCFS y SJF
 - **Drag & Drop**: Arrastra archivos YAML directamente al simulador
 - **Tooltips**: Información detallada al pasar el mouse sobre los procesos
 - **Mensajes informativos**: Feedback visual para todas las acciones
-- **Botón de ejemplo**: Carga rápida de datos de prueba
+- **Botones de ejemplo**: Carga rápida de datos de prueba para cada algoritmo
 
 ### Cálculos Automáticos
 - Tiempo de inicio de cada proceso
@@ -102,8 +121,9 @@ El simulador incluye un ejemplo basado en el siguiente caso:
 - **js-yaml**: Librería para parsear archivos YAML
 - **LocalStorage**: Para persistir configuraciones (opcional)
 
-## 📈 Algoritmo FCFS
+## 📚 Algoritmos Implementados
 
+### FCFS (First Come, First Served)
 El algoritmo **First Come, First Served** es uno de los más simples de planificación de procesos:
 
 1. Los procesos se ejecutan en el orden de llegada
@@ -111,15 +131,29 @@ El algoritmo **First Come, First Served** es uno de los más simples de planific
 3. Un proceso debe terminar completamente antes de que inicie el siguiente
 4. Simple de implementar pero puede causar el "convoy effect"
 
-### Fórmulas utilizadas:
-- **Tiempo de respuesta** = Tiempo de inicio - Tiempo de llegada
-- **Tiempo de espera** = Tiempo de respuesta (en FCFS no hay preemption)
-- **Tiempo de turnaround** = Tiempo de finalización - Tiempo de llegada
+### SJF (Shortest Job First)
+El algoritmo **Shortest Job First** optimiza el tiempo de espera promedio:
+
+1. Selecciona el proceso con menor tiempo de CPU disponible
+2. No hay desalojo (non-preemptive en esta implementación)
+3. En caso de empate, usa FCFS como criterio de desempate
+4. Minimiza el tiempo de espera promedio pero puede causar "starvation"
+
+### Fórmulas utilizadas (ambos algoritmos):
+- **Tiempo de espera** = Tiempo de inicio - Tiempo de llegada
+- **Tiempo de retorno (turnaround)** = Tiempo de finalización - Tiempo de llegada
+- **Tiempo de respuesta** = Tiempo de retorno (en algoritmos no preemptivos)
 
 ## 🎨 Personalización
 
 ### Colores de procesos
 Los procesos se muestran con diferentes colores en el diagrama de Gantt. Puedes personalizar los colores editando las clases CSS `.process-1`, `.process-2`, etc. en `styles.css`.
+
+### Algoritmos personalizados
+Para agregar nuevos algoritmos:
+1. Crea una nueva clase scheduler siguiendo el patrón de `fcfsScheduler.js` o `sjfScheduler.js`
+2. Agrégala al selector en `index.html`
+3. Intégrala en `main.js` siguiendo el patrón existente
 
 ### Unidad de tiempo visual
 La escala visual puede ajustarse modificando la variable `timeUnit` en `ganttChart.js` (por defecto 30px por unidad).
@@ -161,4 +195,12 @@ Este proyecto está desarrollado con fines educativos y puede ser usado libremen
 
 ---
 
-**Desarrollado como herramienta educativa para el estudio de algoritmos de planificación de procesos del sistema operativo.**
+**Desarrollado como herramienta educativa para el estudio y comparación de algoritmos de planificación de procesos del sistema operativo.**
+
+## 🆆 Nuevas Características (v2.0)
+
+- ✨ **Algoritmo SJF agregado**: Implementación completa del algoritmo Shortest Job First
+- 🔄 **Selector dinámico**: Cambia entre algoritmos sin recargar la página
+- 📈 **Ejemplos comparativos**: Datos optimizados para mostrar diferencias entre algoritmos
+- 🛠️ **Arquitectura modular**: Fácil agregado de nuevos algoritmos
+- 📊 **Estadísticas mejoradas**: Métricas detalladas para ambos algoritmos

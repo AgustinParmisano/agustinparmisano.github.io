@@ -47,9 +47,7 @@ class YAMLParser {
                 };
             });
 
-            // Ordenar procesos por tiempo de llegada (FCFS)
-            this.processes.sort((a, b) => a.arrivalTime - b.arrivalTime);
-
+            // No ordenar automáticamente - cada algoritmo decide su ordenación
             return this.processes;
         } catch (error) {
             console.error('Error al parsear YAML:', error);
@@ -195,6 +193,53 @@ time_quantum: null  # No aplica para FCFS
     loadExampleProcesses() {
         const exampleYAML = this.getExampleYAML();
         return this.parseYAML(exampleYAML);
+    }
+
+    /**
+     * Genera un ejemplo de YAML específico para SJF
+     * @returns {string} - Contenido YAML de ejemplo para SJF
+     */
+    getSJFExampleYAML() {
+        return `# Ejemplo de archivo YAML para simulador SJF
+# Datos optimizados para mostrar las diferencias con FCFS
+
+processes:
+  - id: 1
+    name: "P1"
+    cpu_time: 6
+    arrival_time: 0
+    
+  - id: 2
+    name: "P2"
+    cpu_time: 8
+    arrival_time: 0
+    
+  - id: 3
+    name: "P3"
+    cpu_time: 7
+    arrival_time: 0
+    
+  - id: 4
+    name: "P4"
+    cpu_time: 3
+    arrival_time: 0
+
+# Con SJF, el orden de ejecución será: P4(3), P1(6), P3(7), P2(8)
+# Con FCFS, el orden sería: P1(6), P2(8), P3(7), P4(3)
+# Esto muestra claramente las diferencias entre ambos algoritmos
+
+algorithm: "SJF"
+time_quantum: null  # No aplica para SJF no preemptivo
+`;
+    }
+
+    /**
+     * Carga procesos desde el ejemplo SJF
+     * @returns {Array} - Lista de procesos del ejemplo SJF
+     */
+    loadSJFExampleProcesses() {
+        const sjfExampleYAML = this.getSJFExampleYAML();
+        return this.parseYAML(sjfExampleYAML);
     }
 }
 
