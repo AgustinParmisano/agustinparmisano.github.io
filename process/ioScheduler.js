@@ -57,7 +57,7 @@ class IOScheduler {
         
         // Buscar la próxima operación E/S no completada
         const nextOperation = process.ioOperations.find(op => 
-            !op.completed && op.startTime === process.cpuTimeUsed
+            !op.completed && (op.cpuTimeBeforeIO === process.cpuTimeUsed || op.startTime === process.cpuTimeUsed)
         );
         
         return nextOperation || null;

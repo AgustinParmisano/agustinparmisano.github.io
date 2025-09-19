@@ -76,7 +76,8 @@ class FCFSIOScheduler {
             name: p.name,
             cpuTime: p.cpuTime,
             arrivalTime: p.arrivalTime,
-            ioOps: p.ioOperations.length
+            ioOps: p.ioOperations.length,
+            ioDetails: p.ioOperations
         })));
     }
 

@@ -185,7 +185,8 @@ time_quantum: null  # No aplica para FCFS
                 
                 return {
                     resource: op.resource,
-                    startTime: op.start_time, // Tiempo relativo al inicio del proceso
+                    cpuTimeBeforeIO: op.start_time, // Tiempo relativo al inicio del proceso
+                    startTime: op.start_time, // Mantener compatibilidad
                     duration: op.duration,
                     completed: false
                 };
@@ -212,7 +213,8 @@ time_quantum: null  # No aplica para FCFS
             
             operations.push({
                 resource: resource.trim(),
-                startTime: parseInt(startTime),
+                cpuTimeBeforeIO: parseInt(startTime),
+                startTime: parseInt(startTime), // Mantener compatibilidad
                 duration: parseInt(duration),
                 completed: false
             });
