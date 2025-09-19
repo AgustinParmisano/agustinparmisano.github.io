@@ -39,6 +39,7 @@
             
             <div class="example-buttons">
                 <button id="loadExample">Cargar Ejemplo FCFS</button>
+                <button id="loadFCFSIOExample">Cargar Ejemplo FCFS con E/S</button>
                 <button id="loadSJFExample">Cargar Ejemplo SJF</button>
                 <button id="loadRRExample">Cargar Ejemplo Round Robin</button>
                 <button id="loadPriorityExample">Cargar Ejemplo Priority</button>
@@ -57,6 +58,7 @@
                             <th>Proceso</th>
                             <th>CPU</th>
                             <th>Llegada</th>
+                            <th id="ioColumn" style="display: none;">E/S</th>
                             <th id="priorityColumn" style="display: none;">Prioridad</th>
                             <th>Tiempo Inicio</th>
                             <th>Tiempo Fin</th>
@@ -92,7 +94,9 @@
     </div>
 
     <script src="yamlParser.js"></script>
+    <script src="ioScheduler.js"></script>
     <script src="fcfsScheduler.js"></script>
+    <script src="fcfsIOScheduler.js"></script>
     <script src="sjfScheduler.js"></script>
     <script src="roundRobinScheduler.js"></script>
     <script src="priorityScheduler.js"></script>
@@ -101,6 +105,10 @@
     <script src="priorityPreemptiveScheduler.js"></script>
     <script src="debug_priority.js"></script>
     <script src="debug_priority_column.js"></script>
+    <script src="test_fcfs_io.js"></script>
+    <script src="test_io_console.js"></script>
+    <script src="debug_fcfs_io.js"></script>
+    <script src="debug_init.js"></script>
     <script src="main.js"></script>
 </body>
 </html>

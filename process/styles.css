@@ -322,6 +322,19 @@ tr:hover {
     font-weight: bold;
 }
 
+/* Estilos para operaciones de E/S */
+.gantt-cell-time.blocked {
+    background-color: #ffcdd2;
+    color: #c62828;
+    font-weight: bold;
+}
+
+.gantt-cell-time.io-operation {
+    background-color: #fff9c4;
+    color: #f57f17;
+    font-weight: bold;
+}
+
 /* Colores por proceso en las celdas */
 .gantt-process-row.process-1 .gantt-cell-time.executing {
     background-color: #ffebee;
@@ -368,6 +381,19 @@ tr:hover {
 .gantt-queue-row {
     border-top: 2px solid #667eea;
     background-color: #f8f9ff;
+}
+
+/* Filas de recursos de E/S */
+.gantt-io-row {
+    border-top: 1px solid #f57f17;
+    background-color: #fffbf2;
+}
+
+.gantt-cell-io-queue {
+    background-color: #fffbf2;
+    color: #e65100;
+    font-size: 12px;
+    font-weight: normal;
 }
 
 /* Efectos hover */

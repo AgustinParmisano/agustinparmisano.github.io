@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test FCFS con E/S</title>
+    <script src="yamlParser.js"></script>
+    <script src="ioScheduler.js"></script>
+    <script src="fcfsIOScheduler.js"></script>
+</head>
+<body>
+    <h2>Test FCFS con E/S</h2>
+    <div id="results"></div>
+    
+    <script>
+        console.log('🧪 Iniciando test rápido...');
+        
+        try {
+            // Crear datos de prueba simple
+            const testProcesses = [
+                {
+                    id: 1,
+                    name: "P1",
+                    cpuTime: 4,
+                    arrivalTime: 0,
+                    ioOperations: [
+                        { cpuTimeBeforeIO: 2, resource: "R1", duration: 1 }
+                    ]
+                },
+                {
+                    id: 2,
+                    name: "P2", 
+                    cpuTime: 3,
+                    arrivalTime: 1,
+                    ioOperations: []
+                }
+            ];
+            
+            console.log('📋 Procesos de prueba:', testProcesses);
+            
+            // Ejecutar scheduler
+            const scheduler = new FCFSIOScheduler();
+            const result = scheduler.schedule(testProcesses);
+            
+            console.log('✅ Resultado:', result);
+            console.log('📊 Timeline:', result.timeline);
+            console.log('💰 Estadísticas:', result.statistics);
+            
+            // Mostrar en página
+            document.getElementById('results').innerHTML = `
+                <h3>✅ Test Exitoso!</h3>
+                <p><strong>Procesos completados:</strong> ${result.processes.length}</p>
+                <p><strong>Eventos en timeline:</strong> ${result.timeline.length}</p>
+                <p><strong>Tiempo total:</strong> ${result.statistics.simulationTime}</p>
+                <p><strong>Eventos E/S:</strong> ${result.timeline.filter(e => e.action && e.action.includes('io')).length}</p>
+                
+                <h4>Timeline de eventos:</h4>
+                <ul>
+                ${result.timeline.map(event => 
+                    `<li>T=${event.time}: ${event.processName} - ${event.action} ${event.state ? '('+event.state+')' : ''}</li>`
+                ).join('')}
+                </ul>
+            `;
+            
+        } catch (error) {
+            console.error('❌ Error en test:', error);
+            document.getElementById('results').innerHTML = `
+                <h3>❌ Error en test</h3>
+                <p>${error.message}</p>
+                <pre>${error.stack}</pre>
+            `;
+        }
+    </script>
+</body>
+</html>

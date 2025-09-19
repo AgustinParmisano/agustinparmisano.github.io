@@ -34,17 +34,26 @@ class YAMLParser {
                     throw new Error(`Proceso ${process.name} no tiene tiempo de llegada válido`);
                 }
 
+                // Parsear operaciones de E/S si existen
+                const ioOperations = this.parseIOOperations(process.io_operations || []);
+                
                 return {
                     id: process.id || index + 1,
                     name: process.name,
                     cpuTime: process.cpu_time,
                     arrivalTime: process.arrival_time,
-                    priority: process.priority || null, // Agregar soporte para prioridad
+                    priority: process.priority || null,
+                    ioOperations: ioOperations, // Nuevas operaciones E/S
                     // Campos calculados que se llenarán después
                     startTime: null,
                     finishTime: null,
                     responseTime: null,
-                    waitTime: null
+                    waitTime: null,
+                    // Campos para manejo de E/S
+                    currentState: 'ready', // ready, running, blocked, terminated
+                    cpuTimeUsed: 0, // Tiempo de CPU usado hasta ahora
+                    remainingCpuTime: process.cpu_time, // Tiempo de CPU restante
+                    currentIOIndex: 0 // Índice de la próxima operación E/S
                 };
             });
 
@@ -146,6 +155,72 @@ time_quantum: null  # No aplica para FCFS
         URL.revokeObjectURL(url);
     }
 
+    /**
+     * Parsea las operaciones de E/S de un proceso
+     * @param {Array|string} ioData - Datos de E/S del YAML
+     * @returns {Array} - Array de operaciones E/S parseadas
+     */
+    parseIOOperations(ioData) {
+        if (!ioData || ioData.length === 0) {
+            return [];
+        }
+        
+        // Si es string, parsear formato: "(R1,2,1)(R2,3,1)"
+        if (typeof ioData === 'string') {
+            return this.parseIOString(ioData);
+        }
+        
+        // Si es array, cada elemento debe ser un objeto
+        if (Array.isArray(ioData)) {
+            return ioData.map((op, index) => {
+                if (typeof op.resource !== 'string') {
+                    throw new Error(`Operación E/S ${index}: recurso debe ser string`);
+                }
+                if (typeof op.start_time !== 'number' || op.start_time < 0) {
+                    throw new Error(`Operación E/S ${index}: start_time debe ser número >= 0`);
+                }
+                if (typeof op.duration !== 'number' || op.duration <= 0) {
+                    throw new Error(`Operación E/S ${index}: duration debe ser número > 0`);
+                }
+                
+                return {
+                    resource: op.resource,
+                    startTime: op.start_time, // Tiempo relativo al inicio del proceso
+                    duration: op.duration,
+                    completed: false
+                };
+            });
+        }
+        
+        throw new Error('Las operaciones E/S deben ser string o array');
+    }
+    
+    /**
+     * Parsea operaciones E/S en formato string: "(R1,2,1)(R2,3,1)"
+     * @param {string} ioString - String con operaciones E/S
+     * @returns {Array} - Array de operaciones parseadas
+     */
+    parseIOString(ioString) {
+        const operations = [];
+        
+        // Regex para encontrar patrones (Recurso,tiempo,duracion)
+        const regex = /\(([^,]+),(\d+),(\d+)\)/g;
+        let match;
+        
+        while ((match = regex.exec(ioString)) !== null) {
+            const [, resource, startTime, duration] = match;
+            
+            operations.push({
+                resource: resource.trim(),
+                startTime: parseInt(startTime),
+                duration: parseInt(duration),
+                completed: false
+            });
+        }
+        
+        return operations;
+    }
+    
     /**
      * Valida que un proceso tenga todos los campos necesarios
      * @param {Object} process - Objeto proceso a validar
@@ -406,6 +481,72 @@ preemptive: true
     loadPriorityPreemptiveExampleProcesses() {
         const priorityPreemptiveExampleYAML = this.getPriorityPreemptiveExampleYAML();
         return this.parseYAML(priorityPreemptiveExampleYAML);
+    }
+    
+    /**
+     * Genera un ejemplo de YAML con operaciones de E/S (basado en la imagen)
+     * @returns {string} - Contenido YAML de ejemplo con E/S
+     */
+    getIOExampleYAML() {
+        return `# Ejemplo de archivo YAML con operaciones de Entrada/Salida
+# Basado en la imagen proporcionada - FCFS con E/S
+
+processes:
+  - id: 1
+    name: "P1"
+    cpu_time: 4
+    arrival_time: 0
+    io_operations: "(R1,2,1)"  # Recurso R1, inicia en CPU tiempo 2, dura 1
+    
+  - id: 2
+    name: "P2"
+    cpu_time: 6
+    arrival_time: 2
+    io_operations: "(R2,3,1)(R2,5,1)"  # Dos operaciones en R2
+    
+  - id: 3
+    name: "P3"
+    cpu_time: 4
+    arrival_time: 3
+    # Sin operaciones E/S
+    
+  - id: 4
+    name: "P4"
+    cpu_time: 5
+    arrival_time: 6
+    io_operations: "(R3,1,2)(R3,3,1)"  # R3 al inicio y después
+    
+  - id: 5
+    name: "P5"
+    cpu_time: 2
+    arrival_time: 8
+    # Sin operaciones E/S
+
+# Configuración para FCFS con E/S
+algorithm: "FCFS_IO"
+io_enabled: true
+
+# Explicación del formato E/S:
+# (Recurso,TiempoInicio,Duración)
+# - Recurso: Identificador del recurso (R1, R2, R3, etc.)
+# - TiempoInicio: Tiempo relativo al inicio de ejecución del proceso
+# - Duración: Tiempo que toma la operación E/S
+
+# Comportamiento esperado:
+# - Cuando un proceso llega al momento de E/S, se bloquea
+# - Pasa a la cola del recurso correspondiente
+# - El CPU pasa al siguiente proceso listo
+# - Después de completar E/S, el proceso vuelve a la cola de listos
+`;
+    }
+    
+    /**
+     * Carga procesos desde el ejemplo con E/S
+     * @returns {Array} - Lista de procesos del ejemplo con E/S
+     */
+    loadIOExampleProcesses() {
+        const ioExampleYAML = this.getIOExampleYAML();
+        return this.parseYAML(ioExampleYAML);
     }
 }
 

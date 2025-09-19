@@ -7,6 +7,7 @@ class ProcessSimulator {
     constructor() {
         this.yamlParser = new YAMLParser();
         this.fcfsScheduler = new FCFSScheduler();
+        this.fcfsIOScheduler = new FCFSIOScheduler();
         this.sjfScheduler = new SJFScheduler();
         this.roundRobinScheduler = new RoundRobinScheduler();
         this.priorityScheduler = new PriorityScheduler([]);
@@ -96,6 +97,14 @@ class ProcessSimulator {
         if (loadPriorityPreemptiveExampleBtn) {
             loadPriorityPreemptiveExampleBtn.addEventListener('click', () => {
                 this.loadExample('priority-preemptive');
+            });
+        }
+
+        // Botón para cargar ejemplo FCFS con E/S
+        const loadFCFSIOExampleBtn = document.getElementById('loadFCFSIOExample');
+        if (loadFCFSIOExampleBtn) {
+            loadFCFSIOExampleBtn.addEventListener('click', () => {
+                this.loadExample('fcfs-io');
             });
         }
 
@@ -209,6 +218,20 @@ class ProcessSimulator {
             }
         }
         
+        // Mostrar/ocultar columna de E/S
+        const ioColumn = document.getElementById('ioColumn');
+        if (ioColumn) {
+            // Mostrar columna E/S si hay procesos con operaciones de E/S
+            const hasIO = this.currentProcesses.some(p => 
+                p.ioOperations && p.ioOperations.length > 0
+            );
+            if (hasIO || algorithm === 'fcfs-io') {
+                ioColumn.style.display = 'table-cell';
+            } else {
+                ioColumn.style.display = 'none';
+            }
+        }
+        
         // Limpiar resultados anteriores si existen
         if (this.simulationResult) {
             this.reset();
@@ -237,15 +260,27 @@ class ProcessSimulator {
                 this.currentProcesses = this.yamlParser.loadPriorityExampleProcesses();
             } else if (algorithm === 'priority-preemptive') {
                 this.currentProcesses = this.yamlParser.loadPriorityPreemptiveExampleProcesses();
+            } else if (algorithm === 'fcfs-io') {
+                this.currentProcesses = this.yamlParser.loadIOExampleProcesses();
             } else {
                 this.currentProcesses = this.yamlParser.loadExampleProcesses();
             }
             
             // Sincronizar selector de algoritmo
             const algorithmSelect = document.getElementById('algorithmSelect');
-            if (algorithmSelect && algorithmSelect.value !== algorithm) {
-                algorithmSelect.value = algorithm;
-                this.handleAlgorithmChange(algorithm);
+            if (algorithmSelect) {
+                // Para fcfs-io, usar fcfs como algoritmo base
+                const selectValue = algorithm === 'fcfs-io' ? 'fcfs' : algorithm;
+                if (algorithmSelect.value !== selectValue) {
+                    algorithmSelect.value = selectValue;
+                    this.handleAlgorithmChange(selectValue);
+                }
+            }
+            
+            // Si es fcfs-io, forzar que se muestren las columnas E/S
+            if (algorithm === 'fcfs-io') {
+                this.selectedAlgorithm = 'fcfs'; // Mantener fcfs como algoritmo
+                this.updateIOColumnVisibility(); // Forzar mostrar columna E/S
             }
             
             this.hideLoading();
@@ -274,6 +309,11 @@ class ProcessSimulator {
             
             // Ejecutar algoritmo seleccionado
             let scheduler;
+            // Verificar si los procesos tienen E/S para usar scheduler apropiado
+            const hasIOOperations = this.currentProcesses.some(p => 
+                p.ioOperations && p.ioOperations.length > 0
+            );
+            
             if (this.selectedAlgorithm === 'sjf') {
                 scheduler = this.sjfScheduler;
                 this.simulationResult = scheduler.schedule(this.currentProcesses);
@@ -286,8 +326,14 @@ class ProcessSimulator {
             } else if (this.selectedAlgorithm === 'priority-preemptive') {
                 this.simulationResult = runPreemptivePriorityScheduling(this.currentProcesses);
             } else {
-                scheduler = this.fcfsScheduler;
-                this.simulationResult = scheduler.schedule(this.currentProcesses);
+                // FCFS: usar scheduler con E/S si hay operaciones de E/S
+                if (hasIOOperations) {
+                    scheduler = this.fcfsIOScheduler;
+                    this.simulationResult = scheduler.schedule(this.currentProcesses);
+                } else {
+                    scheduler = this.fcfsScheduler;
+                    this.simulationResult = scheduler.schedule(this.currentProcesses);
+                }
             }
             
             // Actualizar todas las visualizaciones
@@ -331,11 +377,21 @@ class ProcessSimulator {
 
         tableBody.innerHTML = '';
 
+        // Primero actualizar visibilidad de columnas
+        this.updateIOColumnVisibility();
+        
         processes.forEach(process => {
             const row = document.createElement('tr');
             
-            // Determinar si mostrar columna de prioridad
+            // Determinar si mostrar columnas especiales
             const showPriority = this.selectedAlgorithm === 'priority' || this.selectedAlgorithm === 'priority-preemptive';
+            const showIO = this.currentProcesses.some(p => 
+                p.ioOperations && p.ioOperations.length > 0
+            );
+            
+            // Crear celdas condicionales
+            const ioCell = showIO ? 
+                `<td>${this.formatIOOperations(process.ioOperations || [])}</td>` : '';
             const priorityCell = showPriority && process.priority !== undefined ? 
                 `<td>${process.priority}</td>` : 
                 (showPriority ? '<td>-</td>' : '');
@@ -344,6 +400,7 @@ class ProcessSimulator {
                 <td>${process.name}</td>
                 <td>${process.cpuTime}</td>
                 <td>${process.arrivalTime}</td>
+                ${ioCell}
                 ${priorityCell}
                 <td>-</td>
                 <td>-</td>
@@ -352,6 +409,45 @@ class ProcessSimulator {
             `;
             tableBody.appendChild(row);
         });
+    }
+    
+    /**
+     * Actualiza la visibilidad de la columna E/S
+     */
+    updateIOColumnVisibility() {
+        const ioColumn = document.getElementById('ioColumn');
+        if (ioColumn) {
+            const hasIO = this.currentProcesses.some(p => 
+                p.ioOperations && p.ioOperations.length > 0
+            );
+            
+            if (hasIO) {
+                ioColumn.style.display = 'table-cell';
+                console.log('📊 Mostrando columna E/S');
+            } else {
+                ioColumn.style.display = 'none';
+                console.log('📊 Ocultando columna E/S');
+            }
+        }
+    }
+    
+    /**
+     * Formatea las operaciones de E/S para mostrar en la tabla
+     * @param {Array} ioOperations - Lista de operaciones de E/S
+     * @returns {string} - String formateado para mostrar
+     */
+    formatIOOperations(ioOperations) {
+        if (!ioOperations || ioOperations.length === 0) {
+            return '-';
+        }
+        
+        // Formatear cada operación como (Recurso,Tiempo,Duración)
+        return ioOperations.map(op => {
+            const resource = op.resource || 'R?';
+            const cpuTime = op.cpuTimeBeforeIO || op.startTime || '?';
+            const duration = op.duration || '?';
+            return `(${resource},${cpuTime},${duration})`;
+        }).join(' ');
     }
 
     /**

@@ -37,13 +37,21 @@ class GanttChart {
 
         this.processes = schedulerResult.processes;
         this.timeline = schedulerResult.timeline;
+        this.ioQueues = schedulerResult.ioQueues || null;
         // Normalizar el nombre del algoritmo
         this.algorithm = algorithm.toUpperCase().replace('-', '_');
         this.quantum = schedulerResult.quantum || null; // Capturar quantum si está disponible
         
+        // Detectar si hay operaciones de E/S
+        this.hasIOOperations = this.detectIOOperations();
+        
         console.log('🎯 GanttChart algoritmo:', this.algorithm, '(original:', algorithm, ')');
         console.log('🔍 ¿Es Priority?', this.algorithm === 'PRIORITY');
         console.log('🔍 ¿Es Priority Preemptive?', this.algorithm === 'PRIORITY_PREEMPTIVE');
+        console.log('🔍 ¿Tiene E/S?', this.hasIOOperations);
+        console.log('📊 Timeline length:', this.timeline.length);
+        console.log('📊 Timeline sample:', this.timeline.slice(0, 5));
+        console.log('📁 IO Queues:', this.ioQueues);
         
         // Calcular tiempo máximo
         this.maxTime = Math.max(
@@ -80,7 +88,7 @@ class GanttChart {
         const legend = document.createElement('div');
         legend.className = 'gantt-legend';
         
-        legend.innerHTML = `
+        let legendContent = `
             <h4>📊 Leyenda del Diagrama de Gantt</h4>
             <div class="legend-item">
                 <span class="symbol">&gt;</span> Llegada del proceso
@@ -90,13 +98,88 @@ class GanttChart {
             </div>
             <div class="legend-item">
                 <span style="background-color: #ffcccb; padding: 2px 6px; border: 1px solid #ccc;">1,2,3...</span> Secuencia de ejecución
+            </div>`;
+        
+        // Agregar información de Quantum para Round Robin
+        if (this.algorithm === 'RR') {
+            legendContent += `
+            <div class="legend-item">
+                <strong>Quantum (RR):</strong> ${this.quantum || 'N/A'} unidades
+            </div>`;
+        }
+        
+        // Agregar información de E/S si existe
+        if (this.hasIOOperations) {
+            legendContent += `
+            <div class="legend-item">
+                <span style="background-color: #ffd700; padding: 2px 6px; border: 1px solid #ccc;">IO</span> Operación de Entrada/Salida
             </div>
             <div class="legend-item">
-                <strong>Quantum (RR):</strong> ${this.algorithm === 'RR' ? (this.quantum || 'N/A') + ' unidades' : 'N/A'}
-            </div>
-        `;
+                <span style="background-color: #ff6b6b; padding: 2px 6px; border: 1px solid #ccc;">B</span> Proceso Bloqueado (esperando E/S)
+            </div>`;
+        }
         
+        legend.innerHTML = legendContent;
         return legend;
+    }
+    
+    /**
+     * Detecta si hay operaciones de E/S en los procesos
+     * @returns {boolean} - True si hay E/S
+     */
+    detectIOOperations() {
+        // Verificar si hay operaciones de E/S en los procesos
+        const hasIOInProcesses = this.processes.some(process => 
+            process.ioOperations && process.ioOperations.length > 0
+        );
+        
+        // Verificar si hay eventos de E/S en el timeline
+        const hasIOInTimeline = this.timeline.some(event => 
+            event.action && (
+                event.action.includes('io') || 
+                event.action.includes('blocked') ||
+                event.state === 'blocked'
+            )
+        );
+        
+        // Verificar si existe información de colas de E/S
+        const hasIOQueues = this.ioQueues && Object.keys(this.ioQueues).length > 0;
+        
+        console.log('🔍 Debug detectIOOperations:');
+        console.log('  - hasIOInProcesses:', hasIOInProcesses);
+        console.log('  - hasIOInTimeline:', hasIOInTimeline);
+        console.log('  - hasIOQueues:', hasIOQueues);
+        
+        if (hasIOInTimeline) {
+            const ioEvents = this.timeline.filter(event => 
+                event.action && (
+                    event.action.includes('io') || 
+                    event.action.includes('blocked') ||
+                    event.state === 'blocked'
+                )
+            );
+            console.log('  - IO events found:', ioEvents.length, ioEvents.slice(0, 3));
+        }
+        
+        return hasIOInProcesses || hasIOInTimeline || hasIOQueues;
+    }
+    
+    /**
+     * Formatea las operaciones de E/S para mostrar en el Gantt
+     * @param {Array} ioOperations - Lista de operaciones de E/S
+     * @returns {string} - String formateado
+     */
+    formatIOOperationsForGantt(ioOperations) {
+        if (!ioOperations || ioOperations.length === 0) {
+            return '-';
+        }
+        
+        return ioOperations.map(op => {
+            const resource = op.resource || 'R?';
+            const cpuTime = op.cpuTimeBeforeIO || op.startTime || '?';
+            const duration = op.duration || '?';
+            return `(${resource},${cpuTime},${duration})`;
+        }).join('\n');
     }
     
     /**
@@ -134,6 +217,11 @@ class GanttChart {
         
         // Columnas fijas
         const headers = ['Procesos', 'CPU', 'Llegada'];
+        
+        // Agregar columna de E/S si hay operaciones
+        if (this.hasIOOperations) {
+            headers.push('E/S');
+        }
         
         // Agregar columna de Prioridad solo para algoritmos Priority
         if (this.algorithm === 'PRIORITY' || this.algorithm === 'PRIORITY_PREEMPTIVE') {
@@ -194,6 +282,15 @@ class GanttChart {
         arrivalCell.className = 'gantt-cell-fixed';
         row.appendChild(arrivalCell);
         
+        // Columna E/S (si hay operaciones)
+        if (this.hasIOOperations) {
+            const ioCell = document.createElement('td');
+            ioCell.textContent = this.formatIOOperationsForGantt(process.ioOperations || []);
+            ioCell.className = 'gantt-cell-fixed';
+            ioCell.style.fontSize = '11px';
+            row.appendChild(ioCell);
+        }
+        
         // Columna Prioridad (solo para Priority Scheduling)
         if (this.algorithm === 'PRIORITY' || this.algorithm === 'PRIORITY_PREEMPTIVE') {
             const priorityCell = document.createElement('td');
@@ -227,7 +324,7 @@ class GanttChart {
                     timeCell.classList.add('executing'); // Usar el estilo del proceso
                 }
             } else {
-                // Para otros momentos, verificar solo si está ejecutándose
+                // Para otros momentos, verificar estado del proceso
                 const executionInfo = this.getProcessExecutionAtTime(process, time);
                 if (executionInfo.isExecuting) {
                     timeCell.textContent = executionInfo.sequence;
@@ -238,6 +335,14 @@ class GanttChart {
                     if (isLastExecution) {
                         timeCell.textContent = `${executionInfo.sequence}<`;
                     }
+                } else if (executionInfo.isBlocked) {
+                    // Mostrar que el proceso está bloqueado por E/S
+                    timeCell.textContent = 'B';
+                    timeCell.classList.add('blocked');
+                } else if (executionInfo.isInIOOperation) {
+                    // Mostrar que el proceso está haciendo E/S como parte de su ejecución
+                    timeCell.textContent = `${executionInfo.ioSequence}`;
+                    timeCell.classList.add('io-operation');
                 }
             }
             
@@ -297,27 +402,67 @@ class GanttChart {
      * @returns {Object} - Información de ejecución
      */
     getProcessExecutionAtTime(process, time) {
-        // Para algoritmos preemptivos (Round Robin), usar el timeline
+        // Para algoritmos con timeline detallado (incluyendo E/S), usar el timeline
         if (this.timeline && this.timeline.length > 0) {
             const timelineEntry = this.timeline.find(entry => 
                 entry.time === time && entry.processId === process.id
             );
             
             if (!timelineEntry) {
+                // Verificar si el proceso está bloqueado o en E/S en este tiempo
+                const ioEntry = this.timeline.find(entry => 
+                    entry.time === time && entry.processId === process.id &&
+                    (entry.state === 'blocked' || entry.action?.includes('io'))
+                );
+                
+                if (ioEntry) {
+                    return {
+                        isExecuting: false,
+                        isBlocked: ioEntry.state === 'blocked',
+                        isInIOOperation: ioEntry.action?.includes('io') || false
+                    };
+                }
+                
                 return { isExecuting: false };
             }
             
-            // Calcular secuencia basada en cuántas veces ha ejecutado este proceso hasta ahora
-            const executionsSoFar = this.timeline.filter(entry => 
-                entry.time < time && entry.processId === process.id
-            ).length;
+            // Si está ejecutándose CPU
+            if (timelineEntry.action === 'cpu_execution' || timelineEntry.state === 'running') {
+                // Calcular secuencia basada en cuántas veces ha ejecutado este proceso hasta ahora
+                const executionsSoFar = this.timeline.filter(entry => 
+                    entry.time < time && entry.processId === process.id &&
+                    (entry.action === 'cpu_execution' || entry.state === 'running')
+                ).length;
+                
+                const sequence = executionsSoFar + 1;
+                
+                return {
+                    isExecuting: true,
+                    sequence: sequence
+                };
+            }
             
-            const sequence = executionsSoFar + 1;
+            // Si está en E/S o bloqueado
+            if (timelineEntry.state === 'blocked') {
+                return {
+                    isExecuting: false,
+                    isBlocked: true,
+                    isInIOOperation: false
+                };
+            }
             
-            return {
-                isExecuting: true,
-                sequence: sequence
-            };
+            if (timelineEntry.action?.includes('io')) {
+                // Para operaciones de E/S, usar la secuencia del timeline
+                const ioSequence = timelineEntry.ioSequence || `IO${this.getIOSequenceNumber(process, timelineEntry.resource, time)}`;
+                return {
+                    isExecuting: false,
+                    isBlocked: false,
+                    isInIOOperation: true,
+                    ioSequence: ioSequence
+                };
+            }
+            
+            return { isExecuting: false };
         }
         
         // Para algoritmos no preemptivos (FCFS, SJF), usar el método original
@@ -358,8 +503,13 @@ class GanttChart {
         queueLabelCell.textContent = 'Ready Queue';
         queueLabelCell.className = 'gantt-cell-fixed';
         queueLabelCell.style.fontWeight = 'bold';
-        // Ajustar colspan según si hay columna de prioridad
-        queueLabelCell.colSpan = (this.algorithm === 'PRIORITY' || this.algorithm === 'PRIORITY_PREEMPTIVE') ? 3 : 2;
+        
+        // Ajustar colspan según las columnas presentes
+        let colspan = 2; // CPU + Llegada por defecto
+        if (this.hasIOOperations) colspan++; // +E/S
+        if (this.algorithm === 'PRIORITY' || this.algorithm === 'PRIORITY_PREEMPTIVE') colspan++; // +Prioridad
+        queueLabelCell.colSpan = colspan;
+        
         row.appendChild(queueLabelCell);
         
         // Celdas de tiempo con procesos en cola - Solo mostrar la secuencia inicial
@@ -392,6 +542,25 @@ class GanttChart {
         row.appendChild(avgWaitCell);
         
         return row;
+    }
+    
+    
+    /**
+     * Obtiene el número de secuencia para una operación de E/S
+     * @param {Object} process - Proceso
+     * @param {string} resource - Recurso de E/S
+     * @param {number} time - Tiempo actual
+     * @returns {number} - Número de secuencia
+     */
+    getIOSequenceNumber(process, resource, time) {
+        // Contar cuántas operaciones E/S ha hecho este proceso hasta este tiempo
+        const ioEventsBefore = this.timeline.filter(event => 
+            event.processId === process.id &&
+            event.time <= time &&
+            event.action?.includes('io')
+        ).length;
+        
+        return ioEventsBefore || 1;
     }
     
     /**
