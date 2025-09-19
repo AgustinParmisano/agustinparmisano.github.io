@@ -1,0 +1,40 @@
+processes:
+  - id: 1
+    name: "P1"
+    cpu_time: 7
+    arrival_time: 0
+    
+  - id: 2
+    name: "P2"
+    cpu_time: 4
+    arrival_time: 2
+    
+  - id: 3
+    name: "P3"
+    cpu_time: 9
+    arrival_time: 4
+    
+  - id: 4
+    name: "P4"
+    cpu_time: 5
+    arrival_time: 5
+
+algorithm: "Round Robin"
+quantum: 3
+
+# Ejemplo optimizado para mostrar las características de Round Robin:
+# - Procesos con diferentes tiempos de llegada
+# - Quantum de 3 unidades de tiempo
+# - Demuestra la naturaleza preemptiva del algoritmo
+# - Muestra cómo los procesos rotan en la cola
+#
+# Resultado esperado con Quantum=3:
+# P1 ejecuta por 3 unidades (0-2), luego se detiene
+# P2 llega en t=2 y ejecuta por 3 unidades (3-5)
+# P3 llega en t=4, P4 llega en t=5
+# La rotación continúa: P1→P3→P4→P1→P2→P3...
+# 
+# Esto demuestra:
+# - Fairness: todos los procesos obtienen tiempo de CPU
+# - Preemption: los procesos se interrumpen cada quantum
+# - Response Time mejorado vs FCFS para procesos interactivos

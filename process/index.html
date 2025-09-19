@@ -20,7 +20,14 @@
                 <select id="algorithmSelect">
                     <option value="fcfs">FCFS (First Come, First Served)</option>
                     <option value="sjf">SJF (Shortest Job First)</option>
+                    <option value="rr">Round Robin</option>
                 </select>
+            </div>
+            
+            <div class="quantum-input" id="quantumInput" style="display: none;">
+                <label for="quantumValue">Quantum de Tiempo:</label>
+                <input type="number" id="quantumValue" min="1" max="10" value="2" />
+                <span class="quantum-info">unidades de tiempo</span>
             </div>
             
             <div class="file-input">
@@ -31,6 +38,7 @@
             <div class="example-buttons">
                 <button id="loadExample">Cargar Ejemplo FCFS</button>
                 <button id="loadSJFExample">Cargar Ejemplo SJF</button>
+                <button id="loadRRExample">Cargar Ejemplo Round Robin</button>
             </div>
             
             <button id="simulate">Simular Procesos</button>
@@ -81,6 +89,7 @@
     <script src="yamlParser.js"></script>
     <script src="fcfsScheduler.js"></script>
     <script src="sjfScheduler.js"></script>
+    <script src="roundRobinScheduler.js"></script>
     <script src="ganttChart.js"></script>
     <script src="main.js"></script>
 </body>

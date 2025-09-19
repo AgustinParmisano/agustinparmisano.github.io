@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Round Robin</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .timeline { margin: 20px 0; }
+        .time-slot { 
+            display: inline-block; 
+            width: 30px; height: 30px;
+            text-align: center; 
+            line-height: 30px;
+            border: 1px solid #333; 
+            margin: 1px; 
+            font-weight: bold;
+        }
+        .p1 { background-color: #ffcccb; }
+        .p2 { background-color: #add8e6; }
+        .p3 { background-color: #90ee90; }
+        .p4 { background-color: #ffb6c1; }
+        .error { color: red; font-weight: bold; }
+        .success { color: green; font-weight: bold; }
+        button { margin: 10px; padding: 10px 20px; font-size: 16px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Debug Round Robin</h1>
+    
+    <button onclick="runTest()">🧪 Test Simple</button>
+    <button onclick="runComplexTest()">🔥 Test Complejo (Original)</button>
+    <button onclick="clearResults()">🗑️ Limpiar</button>
+    
+    <div id="output"></div>
+
+    <script src="roundRobinScheduler.js"></script>
+    <script>
+        function runTest() {
+            console.clear();
+            const output = document.getElementById('output');
+            
+            output.innerHTML = '<h2>🔄 Ejecutando test simple...</h2>';
+            
+            try {
+                // Test simple con 2 procesos
+                const scheduler = new RoundRobinScheduler(3);
+                const processes = [
+                    { id: 1, name: 'P1', cpuTime: 5, arrivalTime: 0 },
+                    { id: 2, name: 'P2', cpuTime: 3, arrivalTime: 1 }
+                ];
+                
+                const result = scheduler.schedule(processes);
+                
+                // Verificar overlaps
+                let html = '<h2>📊 Resultados Test Simple</h2>';
+                const overlaps = checkOverlaps(result.timeline);
+                
+                if (overlaps.length > 0) {
+                    html += '<div class="error">❌ ERRORES ENCONTRADOS:</div>';
+                    overlaps.forEach(error => {
+                        html += `<div class="error">• Tiempo ${error.time}: ${error.processes.join(' Y ')}</div>`;
+                    });
+                } else {
+                    html += '<div class="success">✅ Sin overlaps - Timeline correcto</div>';
+                }
+                
+                // Timeline detallado
+                html += '<h3>Timeline detallado:</h3>';
+                result.timeline.forEach(entry => {
+                    html += `<div>T${entry.time}: ${entry.processName} (CPU restante: ${entry.cpuRemaining})</div>`;
+                });
+                
+                // Diagrama visual
+                html += '<h3>Diagrama de Gantt:</h3>';
+                html += renderGanttChart(result.timeline);
+                
+                // Estadísticas
+                html += '<h3>Estadísticas finales:</h3>';
+                result.processes.forEach(p => {
+                    html += `<div><strong>${p.name}:</strong> Inicio=${p.startTime}, Fin=${p.finishTime}, TR=${p.responseTime}, TE=${p.waitTime}</div>`;
+                });
+                
+                output.innerHTML = html;
+                
+            } catch (error) {
+                output.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+                console.error(error);
+            }
+        }
+        
+        function runComplexTest() {
+            console.clear();
+            const output = document.getElementById('output');
+            
+            output.innerHTML = '<h2>🔄 Ejecutando test complejo (caso original)...</h2>';
+            
+            try {
+                // Test del ejemplo que falló originalmente
+                const scheduler = new RoundRobinScheduler(3);
+                const processes = [
+                    { id: 1, name: 'P1', cpuTime: 7, arrivalTime: 0 },
+                    { id: 2, name: 'P2', cpuTime: 4, arrivalTime: 2 },
+                    { id: 3, name: 'P3', cpuTime: 9, arrivalTime: 4 },
+                    { id: 4, name: 'P4', cpuTime: 5, arrivalTime: 5 }
+                ];
+                
+                const result = scheduler.schedule(processes);
+                
+                // Análisis detallado
+                let html = '<h2>📊 Test Complejo - Caso Original</h2>';
+                
+                const overlaps = checkOverlaps(result.timeline);
+                
+                if (overlaps.length > 0) {
+                    html += '<div class="error">❌ ERRORES CRÍTICOS:</div>';
+                    overlaps.forEach(error => {
+                        html += `<div class="error">• T${error.time}: ${error.processes.join(' + ')} ejecutándose simultáneamente</div>`;
+                    });
+                } else {
+                    html += '<div class="success">✅ CORRECTO: Solo un proceso por unidad de tiempo</div>';
+                }
+                
+                // Diagrama visual compacto
+                html += '<h3>Diagrama de Gantt Completo:</h3>';
+                html += renderGanttChart(result.timeline);
+                
+                // Análisis de quantum
+                html += '<h3>Análisis de Quantum:</h3>';
+                html += analyzeQuantumUsage(result.timeline, 3);
+                
+                // Context switches
+                html += '<h3>Cambios de Contexto:</h3>';
+                html += `<div>Total: <strong>${result.statistics.contextSwitches}</strong></div>`;
+                
+                output.innerHTML = html;
+                
+            } catch (error) {
+                output.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+                console.error(error);
+            }
+        }
+        
+        function checkOverlaps(timeline) {
+            const timeMap = new Map();
+            const overlaps = [];
+            
+            timeline.forEach(entry => {
+                if (timeMap.has(entry.time)) {
+                    const existing = timeMap.get(entry.time);
+                    overlaps.push({
+                        time: entry.time,
+                        processes: [existing, entry.processName]
+                    });
+                } else {
+                    timeMap.set(entry.time, entry.processName);
+                }
+            });
+            
+            return overlaps;
+        }
+        
+        function renderGanttChart(timeline) {
+            if (!timeline.length) return '<div>No hay timeline</div>';
+            
+            const maxTime = Math.max(...timeline.map(t => t.time)) + 1;
+            let html = '<div class="timeline">';
+            
+            // Línea de tiempo
+            for (let time = 0; time < maxTime; time++) {
+                const entry = timeline.find(t => t.time === time);
+                if (entry) {
+                    html += `<div class="time-slot p${entry.processId}" title="T${time}: ${entry.processName}">${entry.processId}</div>`;
+                } else {
+                    html += `<div class="time-slot" title="T${time}: CPU inactiva">-</div>`;
+                }
+            }
+            html += '</div>';
+            
+            // Leyenda de tiempos
+            html += '<div style="font-size: 12px; margin-top: 5px;">';
+            for (let time = 0; time < maxTime; time++) {
+                html += `<span style="display: inline-block; width: 32px; text-align: center;">${time}</span>`;
+            }
+            html += '</div>';
+            
+            return html;
+        }
+        
+        function analyzeQuantumUsage(timeline, quantum) {
+            let html = '';
+            let currentProcess = null;
+            let burstLength = 0;
+            let bursts = [];
+            
+            timeline.forEach((entry, index) => {
+                if (currentProcess !== entry.processId) {
+                    if (currentProcess !== null) {
+                        bursts.push({ process: currentProcess, length: burstLength });
+                    }
+                    currentProcess = entry.processId;
+                    burstLength = 1;
+                } else {
+                    burstLength++;
+                }
+                
+                // Último burst
+                if (index === timeline.length - 1) {
+                    bursts.push({ process: currentProcess, length: burstLength });
+                }
+            });
+            
+            bursts.forEach(burst => {
+                const status = burst.length === quantum ? '✅ Quantum completo' : '⚠️ Burst parcial';
+                html += `<div>P${burst.process}: ${burst.length} unidades ${status}</div>`;
+            });
+            
+            return html;
+        }
+        
+        function clearResults() {
+            document.getElementById('output').innerHTML = '<p>Resultados limpiados. Ejecuta un test.</p>';
+        }
+    </script>
+</body>
+</html>

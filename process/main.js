@@ -8,6 +8,7 @@ class ProcessSimulator {
         this.yamlParser = new YAMLParser();
         this.fcfsScheduler = new FCFSScheduler();
         this.sjfScheduler = new SJFScheduler();
+        this.roundRobinScheduler = new RoundRobinScheduler();
         this.ganttChart = new GanttChart();
         
         this.currentProcesses = [];
@@ -70,6 +71,14 @@ class ProcessSimulator {
         if (loadSJFExampleBtn) {
             loadSJFExampleBtn.addEventListener('click', () => {
                 this.loadExample('sjf');
+            });
+        }
+
+        // Botón para cargar ejemplo Round Robin
+        const loadRRExampleBtn = document.getElementById('loadRRExample');
+        if (loadRRExampleBtn) {
+            loadRRExampleBtn.addEventListener('click', () => {
+                this.loadExample('rr');
             });
         }
 
@@ -154,6 +163,18 @@ class ProcessSimulator {
                 algorithmTitle.textContent = 'Algoritmo FCFS (First Come, First Served)';
             } else if (algorithm === 'sjf') {
                 algorithmTitle.textContent = 'Algoritmo SJF (Shortest Job First)';
+            } else if (algorithm === 'rr') {
+                algorithmTitle.textContent = 'Algoritmo Round Robin';
+            }
+        }
+        
+        // Mostrar/ocultar control de quantum
+        const quantumInput = document.getElementById('quantumInput');
+        if (quantumInput) {
+            if (algorithm === 'rr') {
+                quantumInput.style.display = 'flex';
+            } else {
+                quantumInput.style.display = 'none';
             }
         }
         
@@ -179,6 +200,8 @@ class ProcessSimulator {
             // Cargar procesos del ejemplo según el algoritmo
             if (algorithm === 'sjf') {
                 this.currentProcesses = this.yamlParser.loadSJFExampleProcesses();
+            } else if (algorithm === 'rr') {
+                this.currentProcesses = this.yamlParser.loadRoundRobinExampleProcesses();
             } else {
                 this.currentProcesses = this.yamlParser.loadExampleProcesses();
             }
@@ -218,11 +241,15 @@ class ProcessSimulator {
             let scheduler;
             if (this.selectedAlgorithm === 'sjf') {
                 scheduler = this.sjfScheduler;
+                this.simulationResult = scheduler.schedule(this.currentProcesses);
+            } else if (this.selectedAlgorithm === 'rr') {
+                scheduler = this.roundRobinScheduler;
+                const quantumValue = document.getElementById('quantumValue')?.value || 2;
+                this.simulationResult = scheduler.schedule(this.currentProcesses, parseInt(quantumValue));
             } else {
                 scheduler = this.fcfsScheduler;
+                this.simulationResult = scheduler.schedule(this.currentProcesses);
             }
-            
-            this.simulationResult = scheduler.schedule(this.currentProcesses);
             
             // Actualizar todas las visualizaciones
             this.updateAllDisplays();
@@ -375,7 +402,7 @@ class ProcessSimulator {
                     <h3>¡Bienvenido al Simulador de Algoritmos de Planificación!</h3>
                     <p>Para comenzar:</p>
                     <ol style="text-align: left; display: inline-block;">
-                        <li>Selecciona el algoritmo de planificación (FCFS o SJF)</li>
+                        <li>Selecciona el algoritmo de planificación (FCFS, SJF o Round Robin)</li>
                         <li>Carga un archivo YAML con los procesos</li>
                         <li>O usa los botones de ejemplo para cargar datos de prueba</li>
                         <li>Haz clic en "Simular Procesos" para ejecutar el algoritmo</li>

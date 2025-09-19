@@ -198,6 +198,45 @@ class GanttChart {
      * @returns {Object} - Información de ejecución
      */
     getProcessExecutionAtTime(process, time) {
+        // Para algoritmos preemptivos (Round Robin), usar el timeline
+        if (this.timeline && this.timeline.length > 0) {
+            const timelineEntry = this.timeline.find(entry => 
+                entry.time === time && entry.processId === process.id
+            );
+            
+            if (!timelineEntry) {
+                return { isExecuting: false };
+            }
+            
+            // Calcular secuencia basada en cuántas veces ha ejecutado este proceso hasta ahora
+            const executionsSoFar = this.timeline.filter(entry => 
+                entry.time < time && entry.processId === process.id
+            ).length;
+            
+            const sequence = executionsSoFar + 1;
+            
+            // Determinar si es inicio/fin de un burst
+            const prevTime = time - 1;
+            const nextTime = time + 1;
+            const prevEntry = this.timeline.find(entry => 
+                entry.time === prevTime && entry.processId === process.id
+            );
+            const nextEntry = this.timeline.find(entry => 
+                entry.time === nextTime && entry.processId === process.id
+            );
+            
+            const isStart = !prevEntry; // Inicio de burst si no hay entrada anterior
+            const isEnd = !nextEntry;   // Fin de burst si no hay entrada siguiente
+            
+            return {
+                isExecuting: true,
+                sequence: sequence,
+                isStart: isStart,
+                isEnd: isEnd
+            };
+        }
+        
+        // Para algoritmos no preemptivos (FCFS, SJF), usar el método original
         if (typeof process.startTime !== 'number' || typeof process.finishTime !== 'number') {
             return { isExecuting: false };
         }
@@ -624,6 +663,16 @@ class GanttChart {
      * @returns {Object|null} - Proceso ejecutándose o null
      */
     getExecutingProcessAtTime(time) {
+        // Para algoritmos preemptivos como Round Robin, usar el timeline
+        if (this.timeline && this.timeline.length > 0) {
+            const timelineEntry = this.timeline.find(entry => entry.time === time);
+            if (timelineEntry) {
+                return this.processes.find(p => p.id === timelineEntry.processId) || null;
+            }
+            return null;
+        }
+        
+        // Para algoritmos no preemptivos (FCFS, SJF), usar el método original
         return this.processes.find(p => 
             p.startTime <= time && p.finishTime > time
         ) || null;
@@ -727,6 +776,51 @@ class GanttChart {
         
         if (avgWaitTime) {
             avgWaitTime.textContent = statistics.averageWaitTime || '-';
+        }
+        
+        // Actualizar estadísticas adicionales si existen
+        this.updateAdditionalStatistics(statistics);
+    }
+    
+    /**
+     * Actualiza estadísticas adicionales específicas del algoritmo
+     * @param {Object} statistics - Estadísticas calculadas
+     */
+    updateAdditionalStatistics(statistics) {
+        const statsDisplay = document.getElementById('statsDisplay');
+        if (!statsDisplay) return;
+        
+        // Remover estadísticas adicionales previas
+        const existingExtra = statsDisplay.querySelectorAll('.extra-stat');
+        existingExtra.forEach(stat => stat.remove());
+        
+        // Agregar estadísticas específicas de Round Robin
+        if (statistics.contextSwitches !== undefined) {
+            const contextSwitchesP = document.createElement('p');
+            contextSwitchesP.className = 'extra-stat';
+            contextSwitchesP.innerHTML = `Cambios de Contexto: <span>${statistics.contextSwitches}</span>`;
+            statsDisplay.appendChild(contextSwitchesP);
+        }
+        
+        if (statistics.quantum !== undefined) {
+            const quantumP = document.createElement('p');
+            quantumP.className = 'extra-stat';
+            quantumP.innerHTML = `Quantum Usado: <span>${statistics.quantum} unidades</span>`;
+            statsDisplay.appendChild(quantumP);
+        }
+        
+        if (statistics.throughput !== undefined) {
+            const throughputP = document.createElement('p');
+            throughputP.className = 'extra-stat';
+            throughputP.innerHTML = `Throughput: <span>${statistics.throughput} procesos/tiempo</span>`;
+            statsDisplay.appendChild(throughputP);
+        }
+        
+        if (statistics.cpuUtilization !== undefined) {
+            const utilizationP = document.createElement('p');
+            utilizationP.className = 'extra-stat';
+            utilizationP.innerHTML = `Utilización CPU: <span>${statistics.cpuUtilization}%</span>`;
+            statsDisplay.appendChild(utilizationP);
         }
     }
 

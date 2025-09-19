@@ -241,6 +241,56 @@ time_quantum: null  # No aplica para SJF no preemptivo
         const sjfExampleYAML = this.getSJFExampleYAML();
         return this.parseYAML(sjfExampleYAML);
     }
+
+    /**
+     * Genera un ejemplo de YAML específico para Round Robin
+     * @returns {string} - Contenido YAML de ejemplo para Round Robin
+     */
+    getRoundRobinExampleYAML() {
+        return `# Ejemplo de archivo YAML para simulador Round Robin
+# Datos optimizados para mostrar características de preemptividad
+
+processes:
+  - id: 1
+    name: "P1"
+    cpu_time: 7
+    arrival_time: 0
+    
+  - id: 2
+    name: "P2"
+    cpu_time: 4
+    arrival_time: 2
+    
+  - id: 3
+    name: "P3"
+    cpu_time: 9
+    arrival_time: 4
+    
+  - id: 4
+    name: "P4"
+    cpu_time: 5
+    arrival_time: 5
+
+# Configuración para Round Robin
+algorithm: "Round Robin"
+quantum: 3
+
+# Este ejemplo demuestra:
+# - Naturaleza preemptiva del algoritmo
+# - Fairness en el tiempo de CPU
+# - Rotación circular de procesos
+# - Mejora en tiempo de respuesta vs FCFS
+`;
+    }
+
+    /**
+     * Carga procesos desde el ejemplo Round Robin
+     * @returns {Array} - Lista de procesos del ejemplo Round Robin
+     */
+    loadRoundRobinExampleProcesses() {
+        const rrExampleYAML = this.getRoundRobinExampleYAML();
+        return this.parseYAML(rrExampleYAML);
+    }
 }
 
 // Exportar para uso en otros módulos

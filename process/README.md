@@ -4,9 +4,10 @@ Un simulador interactivo de algoritmos de planificación de procesos que incluye
 
 ## 🚀 Características
 
-- **Múltiples algoritmos**: Implementación completa de FCFS y SJF con selector interactivo
+- **Múltiples algoritmos**: Implementación completa de FCFS, SJF y Round Robin con selector interactivo
 - **Algoritmo FCFS**: First Come, First Served (no preemptivo)
 - **Algoritmo SJF**: Shortest Job First (no preemptivo) con desempate por orden de llegada
+- **Algoritmo Round Robin**: Planificación preemptiva con quantum de tiempo configurable
 - **Visualización de Gantt**: Diagrama de Gantt interactivo con colores diferenciados por proceso
 - **Carga de archivos YAML**: Soporte para cargar configuraciones de procesos desde archivos YAML
 - **Ejemplos incluidos**: Datos de ejemplo específicos para cada algoritmo
@@ -24,10 +25,13 @@ process/
 ├── yamlParser.js           # Módulo para parsear archivos YAML
 ├── fcfsScheduler.js        # Implementación del algoritmo FCFS
 ├── sjfScheduler.js         # Implementación del algoritmo SJF
+├── roundRobinScheduler.js  # Implementación del algoritmo Round Robin
 ├── ganttChart.js           # Generador de diagramas de Gantt
 ├── main.js                 # Módulo principal que integra todo
 ├── ejemplo_fcfs.yaml       # Archivo de ejemplo para FCFS
 ├── ejemplo_sjf.yaml        # Archivo de ejemplo para SJF
+├── ejemplo_round_robin.yaml # Archivo de ejemplo para Round Robin
+├── test_round_robin.js     # Pruebas para Round Robin
 └── README.md               # Este archivo
 ```
 
@@ -35,7 +39,7 @@ process/
 
 1. **Clona o descarga** los archivos del proyecto
 2. **Abre** `index.html` en tu navegador web
-3. **Selecciona el algoritmo** que deseas simular (FCFS o SJF)
+3. **Selecciona el algoritmo** que deseas simular (FCFS, SJF o Round Robin)
 4. **Carga un archivo YAML** con datos de procesos o usa los ejemplos incluidos
 5. **Haz clic** en "Simular Procesos" para ejecutar el algoritmo
 
@@ -90,6 +94,24 @@ También incluye un ejemplo optimizado para mostrar las diferencias con FCFS:
 
 Esto demuestra cómo SJF evita el "efecto convoy" que puede ocurrir en FCFS.
 
+### Ejemplo Round Robin
+También incluye un ejemplo que demuestra la preemptividad:
+
+| Proceso | CPU | Llegada |
+|---------|-----|----------|
+| P1      | 7   | 0        |
+| P2      | 4   | 2        |
+| P3      | 9   | 4        |
+| P4      | 5   | 5        |
+
+**Con Round Robin (Quantum=3):** P1 se ejecuta por 3 unidades, luego rota  
+**Resultado:** Todos los procesos obtienen CPU de manera justa  
+
+Esto demuestra:
+- **Preemption**: Los procesos se interrumpen cada quantum
+- **Fairness**: Tiempo de CPU distribuido equitativamente
+- **Response Time**: Mejor tiempo de respuesta para procesos interactivos
+
 ## 🎯 Funcionalidades
 
 ### Visualización Principal
@@ -138,6 +160,15 @@ El algoritmo **Shortest Job First** optimiza el tiempo de espera promedio:
 2. No hay desalojo (non-preemptive en esta implementación)
 3. En caso de empate, usa FCFS como criterio de desempate
 4. Minimiza el tiempo de espera promedio pero puede causar "starvation"
+
+### Round Robin
+El algoritmo **Round Robin** implementa planificación preemptiva con fairness:
+
+1. Cada proceso recibe un quantum de tiempo fijo para ejecutar
+2. Si el proceso no termina en su quantum, se interrumpe (preemptivo)
+3. Los procesos se organizan en una cola circular (FIFO)
+4. Garantiza fairness pero puede tener overhead por cambios de contexto
+5. El quantum es configurable (1-10 unidades de tiempo)
 
 ### Fórmulas utilizadas (ambos algoritmos):
 - **Tiempo de espera** = Tiempo de inicio - Tiempo de llegada

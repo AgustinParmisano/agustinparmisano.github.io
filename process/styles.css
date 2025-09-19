@@ -66,6 +66,40 @@ header h2 {
     color: #555;
 }
 
+/* Control de Quantum */
+.quantum-input {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 180px;
+}
+
+.quantum-input label {
+    font-weight: bold;
+    color: #555;
+}
+
+.quantum-input input[type="number"] {
+    padding: 10px;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+    width: 80px;
+    transition: border-color 0.3s ease;
+}
+
+.quantum-input input[type="number"]:focus {
+    border-color: #667eea;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.quantum-info {
+    font-size: 12px;
+    color: #777;
+    font-style: italic;
+}
+
 select {
     padding: 10px;
     border: 2px solid #ddd;
@@ -436,17 +470,33 @@ tr:hover {
     padding-bottom: 10px;
 }
 
-#statsDisplay p {
-    margin-bottom: 10px;
-    font-size: 16px;
+.statistics p {
+    margin: 10px 0;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border-left: 4px solid #667eea;
+    border-radius: 3px;
 }
 
-#statsDisplay span {
+.statistics p:hover {
+    background: #e6f3ff;
+}
+
+/* Estadísticas adicionales para Round Robin */
+.statistics .extra-stat {
+    border-left-color: #4CAF50;
+    background: #f1f8e9;
+    font-size: 14px;
+}
+
+.statistics .extra-stat:hover {
+    background: #e8f5e8;
+}
+
+.statistics .extra-stat span {
     font-weight: bold;
-    color: #667eea;
+    color: #2e7d32;
 }
-
-/* Responsive design */
 @media (max-width: 768px) {
     .container {
         padding: 10px;
