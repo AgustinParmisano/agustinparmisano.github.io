@@ -38,6 +38,7 @@ class GanttChart {
         this.processes = schedulerResult.processes;
         this.timeline = schedulerResult.timeline;
         this.algorithm = algorithm.toUpperCase();
+        this.quantum = schedulerResult.quantum || null; // Capturar quantum si está disponible
         
         // Calcular tiempo máximo
         this.maxTime = Math.max(
@@ -57,11 +58,42 @@ class GanttChart {
      * Renderiza el diagrama de Gantt como tabla (formato Excel)
      */
     renderGanttBars() {
+        // Crear leyenda explicativa
+        const legend = this.createGanttLegend();
+        this.container.appendChild(legend);
+        
         // Crear tabla de Gantt
         const ganttTable = this.createGanttTable();
         this.container.appendChild(ganttTable);
     }
 
+    /**
+     * Crea la leyenda explicativa del diagrama de Gantt
+     * @returns {HTMLElement} - Leyenda del diagrama
+     */
+    createGanttLegend() {
+        const legend = document.createElement('div');
+        legend.className = 'gantt-legend';
+        
+        legend.innerHTML = `
+            <h4>📊 Leyenda del Diagrama de Gantt</h4>
+            <div class="legend-item">
+                <span class="symbol">&gt;</span> Llegada del proceso
+            </div>
+            <div class="legend-item">
+                <span class="symbol">&lt;</span> Finalización completa del proceso
+            </div>
+            <div class="legend-item">
+                <span style="background-color: #ffcccb; padding: 2px 6px; border: 1px solid #ccc;">1,2,3...</span> Secuencia de ejecución
+            </div>
+            <div class="legend-item">
+                <strong>Quantum (RR):</strong> ${this.algorithm === 'RR' ? (this.quantum || 'N/A') + ' unidades' : 'N/A'}
+            </div>
+        `;
+        
+        return legend;
+    }
+    
     /**
      * Crea la tabla del diagrama de Gantt (formato Excel)
      * @returns {HTMLElement} - Tabla del diagrama
@@ -156,20 +188,37 @@ class GanttChart {
             const timeCell = document.createElement('td');
             timeCell.className = 'gantt-cell-time';
             
-            const executionInfo = this.getProcessExecutionAtTime(process, time);
-            if (executionInfo.isExecuting) {
-                timeCell.textContent = executionInfo.sequence;
-                timeCell.classList.add('executing');
-                
-                // Agregar símbolos de inicio y fin
-                if (executionInfo.isStart) {
-                    timeCell.innerHTML = `>${executionInfo.sequence}`;
+            // Verificar si es el momento de llegada del proceso
+            if (time === process.arrivalTime) {
+                // Mostrar símbolo de llegada independientemente del estado
+                const executionInfo = this.getProcessExecutionAtTime(process, time);
+                if (executionInfo.isExecuting) {
+                    // Si está ejecutándose en su momento de llegada
+                    timeCell.textContent = `>${executionInfo.sequence}`;
+                    timeCell.classList.add('executing');
+                    
+                    // Verificar si también termina en este momento
+                    const isLastExecution = this.isLastExecutionTime(process, time);
+                    if (isLastExecution) {
+                        timeCell.textContent = `>${executionInfo.sequence}<`;
+                    }
+                } else {
+                    // Si no está ejecutándose pero es su momento de llegada
+                    timeCell.textContent = '>';
+                    timeCell.classList.add('executing'); // Usar el estilo del proceso
                 }
-                if (executionInfo.isEnd) {
-                    timeCell.innerHTML = `${executionInfo.sequence}<`;
-                }
-                if (executionInfo.isStart && executionInfo.isEnd) {
-                    timeCell.innerHTML = `>${executionInfo.sequence}<`;
+            } else {
+                // Para otros momentos, verificar solo si está ejecutándose
+                const executionInfo = this.getProcessExecutionAtTime(process, time);
+                if (executionInfo.isExecuting) {
+                    timeCell.textContent = executionInfo.sequence;
+                    timeCell.classList.add('executing');
+                    
+                    // Verificar si es la última ejecución del proceso
+                    const isLastExecution = this.isLastExecutionTime(process, time);
+                    if (isLastExecution) {
+                        timeCell.textContent = `${executionInfo.sequence}<`;
+                    }
                 }
             }
             
@@ -189,6 +238,37 @@ class GanttChart {
         row.appendChild(teCell);
         
         return row;
+    }
+    
+    /**
+     * Determina si un tiempo dado es la última ejecución de un proceso
+     * @param {Object} process - Proceso
+     * @param {number} time - Tiempo a verificar
+     * @returns {boolean} - True si es la última ejecución
+     */
+    isLastExecutionTime(process, time) {
+        // Para algoritmos preemptivos (Round Robin), usar el timeline
+        if (this.timeline && this.timeline.length > 0) {
+            // Obtener todas las ejecuciones de este proceso
+            const processExecutions = this.timeline.filter(entry => 
+                entry.processId === process.id
+            );
+            
+            if (processExecutions.length === 0) {
+                return false;
+            }
+            
+            // Encontrar el tiempo máximo de ejecución para este proceso
+            const maxExecutionTime = Math.max(...processExecutions.map(entry => entry.time));
+            return time === maxExecutionTime;
+        }
+        
+        // Para algoritmos no preemptivos, usar finishTime
+        if (process.finishTime && typeof process.finishTime === 'number') {
+            return time === process.finishTime - 1;
+        }
+        
+        return false;
     }
     
     /**
@@ -215,24 +295,9 @@ class GanttChart {
             
             const sequence = executionsSoFar + 1;
             
-            // Determinar si es inicio/fin de un burst
-            const prevTime = time - 1;
-            const nextTime = time + 1;
-            const prevEntry = this.timeline.find(entry => 
-                entry.time === prevTime && entry.processId === process.id
-            );
-            const nextEntry = this.timeline.find(entry => 
-                entry.time === nextTime && entry.processId === process.id
-            );
-            
-            const isStart = !prevEntry; // Inicio de burst si no hay entrada anterior
-            const isEnd = !nextEntry;   // Fin de burst si no hay entrada siguiente
-            
             return {
                 isExecuting: true,
-                sequence: sequence,
-                isStart: isStart,
-                isEnd: isEnd
+                sequence: sequence
             };
         }
         
@@ -247,14 +312,10 @@ class GanttChart {
         }
         
         const sequence = time - process.startTime + 1;
-        const isStart = time === process.startTime;
-        const isEnd = time === process.finishTime - 1;
         
         return {
             isExecuting: true,
-            sequence: sequence,
-            isStart: isStart,
-            isEnd: isEnd
+            sequence: sequence
         };
     }
     

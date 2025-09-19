@@ -497,6 +497,37 @@ tr:hover {
     font-weight: bold;
     color: #2e7d32;
 }
+
+/* Leyenda del diagrama de Gantt */
+.gantt-legend {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    padding: 10px;
+    margin: 10px 0;
+    font-size: 12px;
+}
+
+.gantt-legend h4 {
+    margin: 0 0 8px 0;
+    color: #495057;
+    font-size: 14px;
+}
+
+.gantt-legend .legend-item {
+    display: inline-block;
+    margin-right: 15px;
+    margin-bottom: 3px;
+}
+
+.gantt-legend .symbol {
+    font-weight: bold;
+    color: #dc3545;
+    background: #f8f9fa;
+    padding: 2px 4px;
+    border: 1px solid #ccc;
+    border-radius: 2px;
+}
 @media (max-width: 768px) {
     .container {
         padding: 10px;

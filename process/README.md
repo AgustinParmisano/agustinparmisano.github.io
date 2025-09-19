@@ -121,11 +121,12 @@ Esto demuestra:
 - **Estadísticas**: Métricas de rendimiento del algoritmo
 
 ### Interactividad
-- **Selector de algoritmo**: Cambio dinámico entre FCFS y SJF
+- **Selector de algoritmo**: Cambio dinámico entre FCFS, SJF y Round Robin
 - **Drag & Drop**: Arrastra archivos YAML directamente al simulador
 - **Tooltips**: Información detallada al pasar el mouse sobre los procesos
 - **Mensajes informativos**: Feedback visual para todas las acciones
 - **Botones de ejemplo**: Carga rápida de datos de prueba para cada algoritmo
+- **Control de Quantum**: Configuración dinámica del quantum para Round Robin (1-10 unidades)
 
 ### Cálculos Automáticos
 - Tiempo de inicio de cada proceso
@@ -134,6 +135,15 @@ Esto demuestra:
 - Tiempo de espera (Wait Time)
 - Tiempo de turnaround
 - Estadísticas promedio
+- Cambios de contexto (Round Robin)
+- Utilización de CPU y throughput
+
+### Diagrama de Gantt Mejorado
+- **Símbolos `>`**: Indican el momento de llegada de cada proceso
+- **Símbolos `<`**: Marcan la finalización completa del proceso
+- **Secuencia numérica**: Muestra el orden de ejecución (1,2,3...)
+- **Leyenda explicativa**: Información clara sobre los símbolos usados
+- **Soporte para algoritmos preemptivos**: Visualización correcta de Round Robin
 
 ## 🔧 Tecnologías Utilizadas
 

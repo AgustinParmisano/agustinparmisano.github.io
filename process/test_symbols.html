@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Símbolos Gantt</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🧪 Test de Símbolos en Diagrama de Gantt</h1>
+            <h2>Verificación de símbolos > (llegada) y < (finalización)</h2>
+        </header>
+
+        <div class="input-section">
+            <button onclick="testRoundRobin()">🔄 Test Round Robin</button>
+            <button onclick="testFCFS()">📊 Test FCFS</button>
+            <button onclick="testSJF()">⚡ Test SJF</button>
+            <button onclick="clearResults()">🗑️ Limpiar</button>
+        </div>
+
+        <div class="results-section">
+            <div class="gantt-container">
+                <h3>Diagrama de Gantt</h3>
+                <div id="ganttChart"></div>
+            </div>
+            
+            <div id="testResults">
+                <h3>Resultados del Test</h3>
+                <div id="analysisOutput"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="yamlParser.js"></script>
+    <script src="fcfsScheduler.js"></script>
+    <script src="sjfScheduler.js"></script>
+    <script src="roundRobinScheduler.js"></script>
+    <script src="ganttChart.js"></script>
+    
+    <script>
+        // Inicializar componentes
+        const ganttChart = new GanttChart();
+        ganttChart.initialize('ganttChart');
+        
+        function testRoundRobin() {
+            const analysisOutput = document.getElementById('analysisOutput');
+            analysisOutput.innerHTML = '<p>🔄 Ejecutando test Round Robin...</p>';
+            
+            // Datos de prueba con llegadas diferentes
+            const processes = [
+                { id: 1, name: 'P1', cpuTime: 4, arrivalTime: 0 },
+                { id: 2, name: 'P2', cpuTime: 3, arrivalTime: 1 },
+                { id: 3, name: 'P3', cpuTime: 5, arrivalTime: 3 },
+                { id: 4, name: 'P4', cpuTime: 2, arrivalTime: 4 }
+            ];
+            
+            const scheduler = new RoundRobinScheduler(2);
+            const result = scheduler.schedule(processes);
+            
+            // Renderizar diagrama
+            ganttChart.render(result, 'RR');
+            
+            // Análisis de símbolos
+            let analysis = '<h4>📋 Análisis de Símbolos Expected:</h4>';
+            
+            processes.forEach(p => {
+                const finalProcess = result.processes.find(rp => rp.id === p.id);
+                analysis += `<div><strong>P${p.id}:</strong> `;
+                analysis += `Llegada en T${p.arrivalTime} (símbolo >) `;
+                if (finalProcess && finalProcess.finishTime) {
+                    analysis += `→ Termina en T${finalProcess.finishTime - 1} (símbolo <)`;
+                }
+                analysis += `</div>`;
+            });
+            
+            analysis += '<div style="margin-top: 10px; padding: 10px; background: #e3f2fd; border-radius: 5px;">';
+            analysis += '<strong>✅ Verificación:</strong> Los símbolos > deben aparecer SOLO en los tiempos de llegada, ';
+            analysis += 'y los símbolos < SOLO cuando cada proceso termina completamente.';
+            analysis += '</div>';
+            
+            analysisOutput.innerHTML = analysis;
+        }
+        
+        function testFCFS() {
+            const analysisOutput = document.getElementById('analysisOutput');
+            analysisOutput.innerHTML = '<p>📊 Ejecutando test FCFS...</p>';
+            
+            const processes = [
+                { id: 1, name: 'P1', cpuTime: 3, arrivalTime: 0 },
+                { id: 2, name: 'P2', cpuTime: 4, arrivalTime: 2 },
+                { id: 3, name: 'P3', cpuTime: 2, arrivalTime: 4 }
+            ];
+            
+            const scheduler = new FCFSScheduler();
+            const result = scheduler.schedule(processes);
+            
+            ganttChart.render(result, 'FCFS');
+            
+            let analysis = '<h4>📋 FCFS - Símbolos Esperados:</h4>';
+            processes.forEach(p => {
+                const finalProcess = result.processes.find(rp => rp.id === p.id);
+                analysis += `<div><strong>P${p.id}:</strong> `;
+                analysis += `Llegada T${p.arrivalTime} (>) `;
+                if (finalProcess && finalProcess.finishTime) {
+                    analysis += `→ Termina T${finalProcess.finishTime - 1} (<)`;
+                }
+                analysis += `</div>`;
+            });
+            
+            analysisOutput.innerHTML = analysis;
+        }
+        
+        function testSJF() {
+            const analysisOutput = document.getElementById('analysisOutput');
+            analysisOutput.innerHTML = '<p>⚡ Ejecutando test SJF...</p>';
+            
+            const processes = [
+                { id: 1, name: 'P1', cpuTime: 6, arrivalTime: 0 },
+                { id: 2, name: 'P2', cpuTime: 2, arrivalTime: 0 },
+                { id: 3, name: 'P3', cpuTime: 4, arrivalTime: 1 }
+            ];
+            
+            const scheduler = new SJFScheduler();
+            const result = scheduler.schedule(processes);
+            
+            ganttChart.render(result, 'SJF');
+            
+            let analysis = '<h4>📋 SJF - Símbolos Esperados:</h4>';
+            processes.forEach(p => {
+                const finalProcess = result.processes.find(rp => rp.id === p.id);
+                analysis += `<div><strong>P${p.id}:</strong> `;
+                analysis += `Llegada T${p.arrivalTime} (>) `;
+                if (finalProcess && finalProcess.finishTime) {
+                    analysis += `→ Termina T${finalProcess.finishTime - 1} (<)`;
+                }
+                analysis += `</div>`;
+            });
+            
+            analysisOutput.innerHTML = analysis;
+        }
+        
+        function clearResults() {
+            ganttChart.clearChart();
+            document.getElementById('analysisOutput').innerHTML = '<p>Selecciona un test para ver los resultados.</p>';
+        }
+    </script>
+</body>
+</html>
