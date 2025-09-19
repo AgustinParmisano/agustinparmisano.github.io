@@ -345,6 +345,68 @@ preemptive: false  # Implementación no preemptiva
         const priorityExampleYAML = this.getPriorityExampleYAML();
         return this.parseYAML(priorityExampleYAML);
     }
+
+    /**
+     * Genera un ejemplo de YAML específico para Priority Preemptive Scheduling
+     * @returns {string} - Contenido YAML de ejemplo para Priority Preemptive
+     */
+    getPriorityPreemptiveExampleYAML() {
+        return `# Ejemplo de archivo YAML para Priority Preemptive Scheduling
+# Diseñado para mostrar las características de preempción por prioridad
+
+processes:
+  - id: 1
+    name: "P1"
+    cpu_time: 10
+    arrival_time: 0
+    priority: 3
+    
+  - id: 2
+    name: "P2"
+    cpu_time: 1
+    arrival_time: 1
+    priority: 1
+    
+  - id: 3
+    name: "P3"
+    cpu_time: 2
+    arrival_time: 2
+    priority: 4
+    
+  - id: 4
+    name: "P4"
+    cpu_time: 1
+    arrival_time: 3
+    priority: 2
+
+# Configuración para Priority Preemptive Scheduling
+algorithm: "Priority Preemptive Scheduling"
+preemptive: true
+
+# Comportamiento esperado:
+# Tiempo 0-1: P1 ejecuta (prioridad 3)
+# Tiempo 1-2: P2 interrumpe a P1 (prioridad 1 > prioridad 3) y se ejecuta
+# Tiempo 2-3: P1 reanuda (prioridad 3 > prioridad 4 de P3)
+# Tiempo 3-4: P4 interrumpe a P1 (prioridad 2 > prioridad 3)
+# Tiempo 4-6: P3 ejecuta (P4 terminó, prioridad 4 < prioridad 3 de P1)
+# Tiempo 6-14: P1 termina de ejecutar
+
+# Este ejemplo demuestra:
+# - Preempción inmediata cuando llega un proceso de mayor prioridad
+# - Reanudación de procesos interrumpidos
+# - Múltiples cambios de contexto
+# - Mejor tiempo de respuesta para procesos de alta prioridad
+`;
+    }
+
+    /**
+     * Carga procesos desde el ejemplo Priority Preemptive Scheduling
+     * @returns {Array} - Lista de procesos del ejemplo Priority Preemptive
+     */
+    loadPriorityPreemptiveExampleProcesses() {
+        const priorityPreemptiveExampleYAML = this.getPriorityPreemptiveExampleYAML();
+        return this.parseYAML(priorityPreemptiveExampleYAML);
+    }
 }
 
 // Exportar para uso en otros módulos

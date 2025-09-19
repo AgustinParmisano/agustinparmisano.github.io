@@ -37,8 +37,13 @@ class GanttChart {
 
         this.processes = schedulerResult.processes;
         this.timeline = schedulerResult.timeline;
-        this.algorithm = algorithm.toUpperCase();
+        // Normalizar el nombre del algoritmo
+        this.algorithm = algorithm.toUpperCase().replace('-', '_');
         this.quantum = schedulerResult.quantum || null; // Capturar quantum si está disponible
+        
+        console.log('🎯 GanttChart algoritmo:', this.algorithm, '(original:', algorithm, ')');
+        console.log('🔍 ¿Es Priority?', this.algorithm === 'PRIORITY');
+        console.log('🔍 ¿Es Priority Preemptive?', this.algorithm === 'PRIORITY_PREEMPTIVE');
         
         // Calcular tiempo máximo
         this.maxTime = Math.max(
@@ -130,8 +135,8 @@ class GanttChart {
         // Columnas fijas
         const headers = ['Procesos', 'CPU', 'Llegada'];
         
-        // Agregar columna de Prioridad solo para algoritmo Priority
-        if (this.algorithm === 'PRIORITY') {
+        // Agregar columna de Prioridad solo para algoritmos Priority
+        if (this.algorithm === 'PRIORITY' || this.algorithm === 'PRIORITY_PREEMPTIVE') {
             headers.push('Prioridad');
         }
         
@@ -190,7 +195,7 @@ class GanttChart {
         row.appendChild(arrivalCell);
         
         // Columna Prioridad (solo para Priority Scheduling)
-        if (this.algorithm === 'PRIORITY') {
+        if (this.algorithm === 'PRIORITY' || this.algorithm === 'PRIORITY_PREEMPTIVE') {
             const priorityCell = document.createElement('td');
             priorityCell.textContent = process.priority !== undefined ? process.priority : '-';
             priorityCell.className = 'gantt-cell-fixed';
@@ -354,7 +359,7 @@ class GanttChart {
         queueLabelCell.className = 'gantt-cell-fixed';
         queueLabelCell.style.fontWeight = 'bold';
         // Ajustar colspan según si hay columna de prioridad
-        queueLabelCell.colSpan = this.algorithm === 'PRIORITY' ? 3 : 2;
+        queueLabelCell.colSpan = (this.algorithm === 'PRIORITY' || this.algorithm === 'PRIORITY_PREEMPTIVE') ? 3 : 2;
         row.appendChild(queueLabelCell);
         
         // Celdas de tiempo con procesos en cola - Solo mostrar la secuencia inicial
@@ -588,7 +593,7 @@ class GanttChart {
             const row = document.createElement('tr');
             
             // Determinar si mostrar columna de prioridad
-            const showPriority = this.algorithm === 'PRIORITY';
+            const showPriority = this.algorithm === 'PRIORITY' || this.algorithm === 'PRIORITY_PREEMPTIVE';
             const priorityCell = showPriority && process.priority !== undefined ? 
                 `<td>${process.priority}</td>` : 
                 (showPriority ? '<td>-</td>' : '');

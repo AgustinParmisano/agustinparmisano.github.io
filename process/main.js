@@ -91,6 +91,14 @@ class ProcessSimulator {
             });
         }
 
+        // Botón para cargar ejemplo Priority Preemptive
+        const loadPriorityPreemptiveExampleBtn = document.getElementById('loadPriorityPreemptiveExample');
+        if (loadPriorityPreemptiveExampleBtn) {
+            loadPriorityPreemptiveExampleBtn.addEventListener('click', () => {
+                this.loadExample('priority-preemptive');
+            });
+        }
+
         // Botón para simular
         const simulateBtn = document.getElementById('simulate');
         if (simulateBtn) {
@@ -175,7 +183,9 @@ class ProcessSimulator {
             } else if (algorithm === 'rr') {
                 algorithmTitle.textContent = 'Algoritmo Round Robin';
             } else if (algorithm === 'priority') {
-                algorithmTitle.textContent = 'Algoritmo Priority Scheduling';
+                algorithmTitle.textContent = 'Algoritmo Priority Scheduling (Non-Preemptive)';
+            } else if (algorithm === 'priority-preemptive') {
+                algorithmTitle.textContent = 'Algoritmo Priority Scheduling (Preemptive)';
             }
         }
         
@@ -192,7 +202,7 @@ class ProcessSimulator {
         // Mostrar/ocultar columna de prioridad
         const priorityColumn = document.getElementById('priorityColumn');
         if (priorityColumn) {
-            if (algorithm === 'priority') {
+            if (algorithm === 'priority' || algorithm === 'priority-preemptive') {
                 priorityColumn.style.display = 'table-cell';
             } else {
                 priorityColumn.style.display = 'none';
@@ -225,6 +235,8 @@ class ProcessSimulator {
                 this.currentProcesses = this.yamlParser.loadRoundRobinExampleProcesses();
             } else if (algorithm === 'priority') {
                 this.currentProcesses = this.yamlParser.loadPriorityExampleProcesses();
+            } else if (algorithm === 'priority-preemptive') {
+                this.currentProcesses = this.yamlParser.loadPriorityPreemptiveExampleProcesses();
             } else {
                 this.currentProcesses = this.yamlParser.loadExampleProcesses();
             }
@@ -271,6 +283,8 @@ class ProcessSimulator {
                 this.simulationResult = scheduler.schedule(this.currentProcesses, parseInt(quantumValue));
             } else if (this.selectedAlgorithm === 'priority') {
                 this.simulationResult = runPriorityScheduling(this.currentProcesses);
+            } else if (this.selectedAlgorithm === 'priority-preemptive') {
+                this.simulationResult = runPreemptivePriorityScheduling(this.currentProcesses);
             } else {
                 scheduler = this.fcfsScheduler;
                 this.simulationResult = scheduler.schedule(this.currentProcesses);
@@ -321,7 +335,7 @@ class ProcessSimulator {
             const row = document.createElement('tr');
             
             // Determinar si mostrar columna de prioridad
-            const showPriority = this.selectedAlgorithm === 'priority';
+            const showPriority = this.selectedAlgorithm === 'priority' || this.selectedAlgorithm === 'priority-preemptive';
             const priorityCell = showPriority && process.priority !== undefined ? 
                 `<td>${process.priority}</td>` : 
                 (showPriority ? '<td>-</td>' : '');
