@@ -1,9 +1,11 @@
 <html>
 	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 		<title>Rainbow Circle Following Mouse</title>
 		<style>
-			body { margin: 0; overflow: hidden; }
-			canvas { width: 100%; height: 100%; display: block; }
+			body { margin: 0; overflow: hidden; touch-action: none; }
+			canvas { width: 100%; height: 100%; display: block; touch-action: none; }
 		</style>
 	</head>
 	<body>
@@ -15,6 +17,14 @@
 			var renderer = new THREE.WebGLRenderer();
 			renderer.setSize( window.innerWidth, window.innerHeight );
 			document.body.appendChild( renderer.domElement );
+
+			// Manejar redimensionamiento de ventana (útil para móviles)
+			function onWindowResize() {
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+			}
+			window.addEventListener( 'resize', onWindowResize, false );
 
 			// Crear una esfera (círculo en 3D) principal
 			var geometry = new THREE.SphereGeometry( 0.5, 32, 32 );
@@ -38,11 +48,11 @@
 			var lastTrailTime = 0;
 			var trailInterval = 50; // Crear nueva esfera cada 50ms
 
-			// Función para convertir coordenadas del mouse a coordenadas 3D
-			function onMouseMove( event ) {
-				// Convertir coordenadas del mouse a coordenadas normalizadas (-1 a 1)
-				mouseX = ( event.clientX / window.innerWidth ) * 2 - 1;
-				mouseY = -( event.clientY / window.innerHeight ) * 2 + 1;
+			// Función para actualizar posición desde coordenadas de pantalla
+			function updatePositionFromScreen( clientX, clientY ) {
+				// Convertir coordenadas a coordenadas normalizadas (-1 a 1)
+				mouseX = ( clientX / window.innerWidth ) * 2 - 1;
+				mouseY = -( clientY / window.innerHeight ) * 2 + 1;
 
 				// Convertir a coordenadas 3D usando el viewport
 				var vector = new THREE.Vector3( mouseX, mouseY, 0.5 );
@@ -54,7 +64,32 @@
 				targetY = camera.position.y + dir.y * distance;
 			}
 
+			// Eventos del mouse (para escritorio)
+			function onMouseMove( event ) {
+				updatePositionFromScreen( event.clientX, event.clientY );
+			}
+
+			// Eventos táctiles (para móviles)
+			function onTouchMove( event ) {
+				event.preventDefault(); // Prevenir scroll y zoom
+				if ( event.touches.length > 0 ) {
+					var touch = event.touches[0];
+					updatePositionFromScreen( touch.clientX, touch.clientY );
+				}
+			}
+
+			function onTouchStart( event ) {
+				event.preventDefault(); // Prevenir scroll y zoom
+				if ( event.touches.length > 0 ) {
+					var touch = event.touches[0];
+					updatePositionFromScreen( touch.clientX, touch.clientY );
+				}
+			}
+
+			// Agregar event listeners para mouse y touch
 			window.addEventListener( 'mousemove', onMouseMove, false );
+			window.addEventListener( 'touchmove', onTouchMove, { passive: false } );
+			window.addEventListener( 'touchstart', onTouchStart, { passive: false } );
 
 			// Función para convertir HSL a hexadecimal
 			function hslToHex(h, s, l) {
