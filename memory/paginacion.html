@@ -113,6 +113,7 @@ footer{text-align:center;color:var(--sub);font-size:.78rem;margin-top:2rem;}
     <summary>Variables del problema</summary>
     <div class="grid-inputs">
       <div class="field"><label>Bits de dirección</label><input type="number" id="addrBits" value="32" min="1" max="64"></div>
+      <div class="field"><label>Bytes por dirección</label><input type="number" id="addrUnit" value="1" min="1"></div>
       <div class="field"><label>Tamaño de página (bytes)</label><input type="number" id="pageSize" value="2048" min="1"></div>
       <div class="field"><label>Bytes de código (P1)</label><input type="number" id="codeBytes" value="51358" min="0"></div>
       <div class="field"><label>Bytes de datos (P1)</label><input type="number" id="dataBytes" value="68131" min="0"></div>
@@ -145,19 +146,19 @@ footer{text-align:center;color:var(--sub);font-size:.78rem;margin-top:2rem;}
 </div>
 
 <script>
-const ids=['addrBits','pageSize','codeBytes','dataBytes','ramGiB','p1Bits','p1Off','pteSize1','l1Bits','l2Bits','l2Off','pteSize2'];
+const ids=['addrBits','addrUnit','pageSize','codeBytes','dataBytes','ramGiB','p1Bits','p1Off','pteSize1','l1Bits','l2Bits','l2Off','pteSize2'];
 const el=Object.fromEntries(ids.map(id=>[id,document.getElementById(id)]));
 const fmt=n=>Number(n).toLocaleString('es-AR');
 const log2=n=>Math.log(n)/Math.log(2);
 const isPow2=n=>n>0 && Math.abs(log2(n)-Math.round(log2(n)))<1e-9;
 
 function compute(){
-  const addrBits=+el.addrBits.value, pageSize=+el.pageSize.value;
+  const addrBits=+el.addrBits.value, addrUnit=+el.addrUnit.value, pageSize=+el.pageSize.value;
   const codeBytes=+el.codeBytes.value, dataBytes=+el.dataBytes.value;
   const ramBytes=+el.ramGiB.value*1024**3;
-  const offsetBits=Math.round(log2(pageSize));
+  const offsetBits=Math.round(log2(pageSize/addrUnit));
   const pageBits=addrBits-offsetBits;
-  const maxLogical=2**addrBits;
+  const maxLogical=2**addrBits*addrUnit;
   const maxPages=2**pageBits;
   const ramFrames=ramBytes/pageSize;
   const codePages=Math.ceil(codeBytes/pageSize);
@@ -181,7 +182,7 @@ function compute(){
   const l2Size=l2TablesNeeded*entriesPerL2*pteSize2;
   const twoLevelTotal=l1Size+l2Size;
 
-  return {addrBits,pageSize,codeBytes,dataBytes,ramBytes,offsetBits,pageBits,maxLogical,maxPages,ramFrames,
+  return {addrBits,addrUnit,pageSize,codeBytes,dataBytes,ramBytes,offsetBits,pageBits,maxLogical,maxPages,ramFrames,
     codePages,dataPages,fragCode,fragData,fragTotal,
     p1Bits,p1Off,pteSize1,oneLevelEntries,oneLevelSize,
     l1Bits,l2Bits,l2Off,pteSize2,pageSize2,codePages2,dataPages2,totalPages2,entriesPerL2,l2TablesNeeded,l1Size,l2Size,twoLevelTotal};
@@ -224,16 +225,16 @@ function ptStackHTML(usedFraction,label,count){
 
 const steps=[
 {tag:'a',title:'Bits de página y desplazamiento',render:v=>`
-  <p>El desplazamiento (offset) cubre cada byte dentro de una página: necesita tantos bits como para representar <span class="mono">${fmt(v.pageSize)}</span> bytes.</p>
-  <div class="formula">offset = log₂(tamaño de página) = log₂(${fmt(v.pageSize)}) = ${v.offsetBits} bits</div>
+  <p>El desplazamiento (offset) cubre cada unidad direccionable dentro de una página. Cada dirección referencia ${v.addrUnit===1?'1 byte':fmt(v.addrUnit)+' bytes'}, así que una página de <span class="mono">${fmt(v.pageSize)}</span> bytes contiene ${fmt(v.pageSize/v.addrUnit)} direcciones.</p>
+  <div class="formula">offset = log₂(tamaño de página / bytes por dirección) = log₂(${fmt(v.pageSize)} / ${v.addrUnit}) = ${v.offsetBits} bits</div>
   <div class="formula">página = bits de dirección − offset = ${v.addrBits} − ${v.offsetBits} = ${v.pageBits} bits</div>
   ${bitbarHTML(v.pageBits,v.offsetBits,v.addrBits)}
   <div class="answer"><div class="big">${v.pageBits} bits página · ${v.offsetBits} bits desplazamiento</div><div class="label">de los ${v.addrBits} bits totales de la dirección</div></div>
 `},
 {tag:'b',title:'Tamaño lógico máximo de un proceso',render:v=>`
-  <p>Con direcciones de ${v.addrBits} bits, el espacio de direcciones que un proceso puede direccionar es 2 elevado a la cantidad de bits.</p>
-  <div class="formula">tamaño máximo = 2^${v.addrBits} bytes</div>
-  <div class="answer"><div class="big">${bytesNice(v.maxLogical)}</div><div class="label">2^${v.addrBits} = ${v.maxLogical.toLocaleString('es-AR')} bytes</div></div>
+  <p>Con direcciones de ${v.addrBits} bits hay 2^${v.addrBits} direcciones distintas${v.addrUnit===1?'':`, y cada una referencia ${fmt(v.addrUnit)} bytes`}.</p>
+  <div class="formula">tamaño máximo = 2^${v.addrBits} × ${v.addrUnit} bytes/dirección</div>
+  <div class="answer"><div class="big">${bytesNice(v.maxLogical)}</div><div class="label">2^${v.addrBits} × ${v.addrUnit} = ${v.maxLogical.toLocaleString('es-AR')} bytes</div></div>
 `},
 {tag:'c',title:'Páginas máximas de P1',render:v=>`
   <p>La cantidad máxima de páginas que puede tener un proceso depende de cuántos valores distintos puede tomar el número de página.</p>
