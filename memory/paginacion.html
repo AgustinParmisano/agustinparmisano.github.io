@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Paginación — resolución paso a paso</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0e1420; --bg2:#141c2b; --panel:#171f2f;
+  --line:#2a3448; --line-soft:#212a3b;
+  --text:#e9edf5; --sub:#8f9bb3;
+  --page:#57c7b8; --page-dim:#57c7b833;
+  --off:#e7a24d; --off-dim:#e7a24d33;
+  --bad:#e0687a;
+  --mono:'IBM Plex Mono',monospace; --sans:'Inter',sans-serif;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#f5f3ee; --bg2:#ffffff; --panel:#ffffff;
+    --line:#dcd6c9; --line-soft:#e8e3d8;
+    --text:#1a1f2b; --sub:#6b7280;
+  }
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--sans);}
+body{padding-bottom:2rem;}
+h1,h2,h3{font-family:var(--sans);margin:0;}
+.mono{font-family:var(--mono);}
+.wrap{max-width:840px;margin:0 auto;padding:1.5rem 1.25rem 3rem;}
+
+header.top{padding:1.75rem 1.25rem 1rem;text-align:center;}
+header.top h1{font-size:1.35rem;font-weight:800;letter-spacing:-0.01em;}
+header.top p{color:var(--sub);font-size:0.92rem;margin-top:.4rem;max-width:520px;margin-left:auto;margin-right:auto;}
+
+/* control panel */
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:1.1rem 1.2rem;margin-bottom:1.5rem;}
+.panel summary{cursor:pointer;font-weight:600;font-size:.95rem;list-style:none;display:flex;align-items:center;gap:.5rem;}
+.panel summary::-webkit-details-marker{display:none;}
+.panel summary::before{content:"⚙";font-size:1rem;}
+.panel[open] summary{margin-bottom:.9rem;}
+.grid-inputs{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:.8rem;}
+.field{display:flex;flex-direction:column;gap:.3rem;}
+.field label{font-size:.74rem;color:var(--sub);}
+.field input,.field select{background:var(--bg2);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:.5rem .6rem;font-family:var(--mono);font-size:.88rem;}
+.field input:focus,.field select:focus{outline:2px solid var(--page);outline-offset:1px;}
+.subhead{font-size:.72rem;text-transform:none;color:var(--sub);margin:1rem 0 .5rem;border-top:1px dashed var(--line);padding-top:.8rem;}
+
+/* stepper nav */
+.stepnav{display:flex;align-items:center;justify-content:space-between;gap:.75rem;margin-bottom:1.1rem;position:sticky;top:0;background:var(--bg);padding:.6rem 0;z-index:5;}
+.stepnav .dots{display:flex;gap:.3rem;flex-wrap:wrap;justify-content:center;flex:1;}
+.dot{width:26px;height:26px;border-radius:7px;border:1px solid var(--line);background:var(--bg2);color:var(--sub);font-family:var(--mono);font-size:.72rem;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.dot.active{background:var(--page);border-color:var(--page);color:#04231d;font-weight:700;}
+.navbtn{background:var(--bg2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:.55rem .9rem;font-family:var(--sans);font-weight:600;font-size:.85rem;cursor:pointer;}
+.navbtn:disabled{opacity:.35;cursor:default;}
+.navbtn:not(:disabled):hover{border-color:var(--page);}
+
+/* step card */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:1.5rem 1.5rem 1.7rem;min-height:60vh;}
+.card .tag{font-size:.75rem;color:var(--page);font-family:var(--mono);}
+.card h2{font-size:1.25rem;margin:.35rem 0 1rem;line-height:1.35;}
+.card .body{font-size:.95rem;line-height:1.6;color:var(--text);}
+.card .body p{margin:.5rem 0;}
+.answer{margin-top:1.1rem;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:.9rem 1rem;}
+.answer .big{font-family:var(--mono);font-size:1.6rem;font-weight:600;color:var(--page);}
+.answer .label{font-size:.78rem;color:var(--sub);margin-top:.15rem;}
+.formula{font-family:var(--mono);font-size:.86rem;color:var(--sub);background:var(--bg2);border-radius:8px;padding:.5rem .7rem;display:inline-block;margin:.3rem 0;}
+
+/* bit bar diagram */
+.bitbar{display:flex;border-radius:10px;overflow:hidden;border:1px solid var(--line);margin:1rem 0;height:56px;}
+.bitseg{display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--mono);font-size:.78rem;}
+.bitseg.page{background:var(--page-dim);color:var(--page);}
+.bitseg.off{background:var(--off-dim);color:var(--off);}
+.bitseg b{font-size:.95rem;}
+
+/* memory blocks */
+.memrow{display:flex;flex-wrap:wrap;gap:3px;margin:.9rem 0;}
+.blk{width:22px;height:22px;border-radius:4px;font-size:.55rem;display:flex;align-items:center;justify-content:center;font-family:var(--mono);color:#04231d;}
+.blk.code{background:var(--page);}
+.blk.data{background:var(--off);}
+.blk.frag{background:var(--bad);opacity:.85;}
+.legend{display:flex;gap:1rem;font-size:.78rem;color:var(--sub);margin-top:.4rem;flex-wrap:wrap;}
+.sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:.35rem;vertical-align:middle;}
+
+/* table diagram */
+.pt-wrap{display:flex;gap:1.4rem;flex-wrap:wrap;margin-top:1rem;align-items:flex-start;}
+.pt-box{border:1px solid var(--line);border-radius:10px;padding:.7rem;background:var(--bg2);min-width:150px;}
+.pt-box .t{font-size:.75rem;color:var(--sub);margin-bottom:.4rem;}
+.pt-box .n{font-family:var(--mono);font-size:1.15rem;color:var(--page);}
+.pt-stack{display:grid;grid-template-columns:repeat(8,8px);gap:2px;margin-top:.5rem;}
+.pt-stack div{width:8px;height:8px;background:var(--page);border-radius:1px;opacity:.85;}
+.pt-stack div.used{background:var(--off);}
+
+footer{text-align:center;color:var(--sub);font-size:.78rem;margin-top:2rem;}
+@media (max-width:560px){
+  .card{padding:1.1rem;}
+  .card h2{font-size:1.08rem;}
+  .answer .big{font-size:1.3rem;}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>Paginación de memoria — ejercicio 24</h1>
+  <p>Cambiá las variables abajo y recorré la solución paso a paso, pensado para proyectar y explicar en clase.</p>
+</header>
+
+<div class="wrap">
+  <details class="panel" id="panel" open>
+    <summary>Variables del problema</summary>
+    <div class="grid-inputs">
+      <div class="field"><label>Bits de dirección</label><input type="number" id="addrBits" value="32" min="1" max="64"></div>
+      <div class="field"><label>Tamaño de página (bytes)</label><input type="number" id="pageSize" value="2048" min="1"></div>
+      <div class="field"><label>Bytes de código (P1)</label><input type="number" id="codeBytes" value="51358" min="0"></div>
+      <div class="field"><label>Bytes de datos (P1)</label><input type="number" id="dataBytes" value="68131" min="0"></div>
+      <div class="field"><label>RAM disponible (GiB)</label><input type="number" id="ramGiB" value="4" min="0" step="0.25"></div>
+    </div>
+    <div class="subhead">Tabla de páginas — 1 nivel (inciso h)</div>
+    <div class="grid-inputs">
+      <div class="field"><label>Bits página (nivel único)</label><input type="number" id="p1Bits" value="20" min="1"></div>
+      <div class="field"><label>Bits desplazamiento</label><input type="number" id="p1Off" value="12" min="1"></div>
+      <div class="field"><label>Tamaño de cada PTE (bytes)</label><input type="number" id="pteSize1" value="1024" min="1"></div>
+    </div>
+    <div class="subhead">Tabla de páginas — 2 niveles (inciso i)</div>
+    <div class="grid-inputs">
+      <div class="field"><label>Bits nivel 1</label><input type="number" id="l1Bits" value="10" min="1"></div>
+      <div class="field"><label>Bits nivel 2</label><input type="number" id="l2Bits" value="10" min="1"></div>
+      <div class="field"><label>Bits desplazamiento</label><input type="number" id="l2Off" value="12" min="1"></div>
+      <div class="field"><label>Tamaño de cada PTE (bytes)</label><input type="number" id="pteSize2" value="1024" min="1"></div>
+    </div>
+  </details>
+
+  <div class="stepnav">
+    <button class="navbtn" id="prevBtn">← Anterior</button>
+    <div class="dots" id="dots"></div>
+    <button class="navbtn" id="nextBtn">Siguiente →</button>
+  </div>
+
+  <div class="card" id="card"></div>
+
+  <footer>Todos los valores se recalculan en vivo a partir del panel de variables.</footer>
+</div>
+
+<script>
+const ids=['addrBits','pageSize','codeBytes','dataBytes','ramGiB','p1Bits','p1Off','pteSize1','l1Bits','l2Bits','l2Off','pteSize2'];
+const el=Object.fromEntries(ids.map(id=>[id,document.getElementById(id)]));
+const fmt=n=>Number(n).toLocaleString('es-AR');
+const log2=n=>Math.log(n)/Math.log(2);
+const isPow2=n=>n>0 && Math.abs(log2(n)-Math.round(log2(n)))<1e-9;
+
+function compute(){
+  const addrBits=+el.addrBits.value, pageSize=+el.pageSize.value;
+  const codeBytes=+el.codeBytes.value, dataBytes=+el.dataBytes.value;
+  const ramBytes=+el.ramGiB.value*1024**3;
+  const offsetBits=Math.round(log2(pageSize));
+  const pageBits=addrBits-offsetBits;
+  const maxLogical=2**addrBits;
+  const maxPages=2**pageBits;
+  const ramFrames=ramBytes/pageSize;
+  const codePages=Math.ceil(codeBytes/pageSize);
+  const dataPages=Math.ceil(dataBytes/pageSize);
+  const fragCode=codePages*pageSize-codeBytes;
+  const fragData=dataPages*pageSize-dataBytes;
+  const fragTotal=fragCode+fragData;
+
+  const p1Bits=+el.p1Bits.value, p1Off=+el.p1Off.value, pteSize1=+el.pteSize1.value;
+  const oneLevelEntries=2**p1Bits;
+  const oneLevelSize=oneLevelEntries*pteSize1;
+
+  const l1Bits=+el.l1Bits.value, l2Bits=+el.l2Bits.value, l2Off=+el.l2Off.value, pteSize2=+el.pteSize2.value;
+  const pageSize2=2**l2Off;
+  const codePages2=Math.ceil(codeBytes/pageSize2);
+  const dataPages2=Math.ceil(dataBytes/pageSize2);
+  const totalPages2=codePages2+dataPages2;
+  const entriesPerL2=2**l2Bits;
+  const l2TablesNeeded=Math.max(1,Math.ceil(totalPages2/entriesPerL2));
+  const l1Size=(2**l1Bits)*pteSize2;
+  const l2Size=l2TablesNeeded*entriesPerL2*pteSize2;
+  const twoLevelTotal=l1Size+l2Size;
+
+  return {addrBits,pageSize,codeBytes,dataBytes,ramBytes,offsetBits,pageBits,maxLogical,maxPages,ramFrames,
+    codePages,dataPages,fragCode,fragData,fragTotal,
+    p1Bits,p1Off,pteSize1,oneLevelEntries,oneLevelSize,
+    l1Bits,l2Bits,l2Off,pteSize2,pageSize2,codePages2,dataPages2,totalPages2,entriesPerL2,l2TablesNeeded,l1Size,l2Size,twoLevelTotal};
+}
+
+function bytesNice(b){
+  if(b>=1024**3) return (b/1024**3).toFixed(b%1024**3===0?0:2)+' GiB';
+  if(b>=1024**2) return (b/1024**2).toFixed(b%1024**2===0?0:2)+' MiB';
+  if(b>=1024) return (b/1024).toFixed(b%1024===0?0:2)+' KiB';
+  return fmt(b)+' B';
+}
+
+function bitbarHTML(pageBits,offsetBits,total){
+  const pw=(pageBits/total*100).toFixed(2), ow=(offsetBits/total*100).toFixed(2);
+  return `<div class="bitbar">
+    <div class="bitseg page" style="width:${pw}%"><b>${pageBits} bits</b><span>página</span></div>
+    <div class="bitseg off" style="width:${ow}%"><b>${offsetBits} bits</b><span>desplaz.</span></div>
+  </div>`;
+}
+
+function memBlocksHTML(codePages,dataPages){
+  const maxShow=60;
+  let codeShown=Math.min(codePages,maxShow), dataShown=Math.min(dataPages,maxShow-codeShown>0?dataPages:0);
+  let html='<div class="memrow">';
+  for(let i=0;i<Math.min(codePages,40);i++) html+=`<div class="blk code" title="página código ${i+1}"></div>`;
+  html+='</div><div class="memrow">';
+  for(let i=0;i<Math.min(dataPages,40);i++) html+=`<div class="blk data" title="página datos ${i+1}"></div>`;
+  html+='</div>';
+  return html;
+}
+
+function ptStackHTML(usedFraction,label,count){
+  const total=64;
+  const used=Math.max(1,Math.round(usedFraction*total));
+  let html=`<div class="pt-box"><div class="t">${label}</div><div class="n">${count}</div><div class="pt-stack">`;
+  for(let i=0;i<total;i++) html+=`<div class="${i<used?'used':''}"></div>`;
+  html+='</div></div>';
+  return html;
+}
+
+const steps=[
+{tag:'a',title:'Bits de página y desplazamiento',render:v=>`
+  <p>El desplazamiento (offset) cubre cada byte dentro de una página: necesita tantos bits como para representar <span class="mono">${fmt(v.pageSize)}</span> bytes.</p>
+  <div class="formula">offset = log₂(tamaño de página) = log₂(${fmt(v.pageSize)}) = ${v.offsetBits} bits</div>
+  <div class="formula">página = bits de dirección − offset = ${v.addrBits} − ${v.offsetBits} = ${v.pageBits} bits</div>
+  ${bitbarHTML(v.pageBits,v.offsetBits,v.addrBits)}
+  <div class="answer"><div class="big">${v.pageBits} bits página · ${v.offsetBits} bits desplazamiento</div><div class="label">de los ${v.addrBits} bits totales de la dirección</div></div>
+`},
+{tag:'b',title:'Tamaño lógico máximo de un proceso',render:v=>`
+  <p>Con direcciones de ${v.addrBits} bits, el espacio de direcciones que un proceso puede direccionar es 2 elevado a la cantidad de bits.</p>
+  <div class="formula">tamaño máximo = 2^${v.addrBits} bytes</div>
+  <div class="answer"><div class="big">${bytesNice(v.maxLogical)}</div><div class="label">2^${v.addrBits} = ${v.maxLogical.toLocaleString('es-AR')} bytes</div></div>
+`},
+{tag:'c',title:'Páginas máximas de P1',render:v=>`
+  <p>La cantidad máxima de páginas que puede tener un proceso depende de cuántos valores distintos puede tomar el número de página.</p>
+  <div class="formula">páginas máx. = 2^(bits de página) = 2^${v.pageBits}</div>
+  <div class="answer"><div class="big">${fmt(v.maxPages)}</div><div class="label">páginas como máximo</div></div>
+`},
+{tag:'d',title:'Marcos disponibles en RAM',render:v=>`
+  <p>Cada marco de RAM tiene el mismo tamaño que una página. Se divide la RAM total por el tamaño de página.</p>
+  <div class="formula">marcos = RAM / tamaño de página = ${bytesNice(v.ramBytes)} / ${fmt(v.pageSize)} B</div>
+  <div class="answer"><div class="big">${fmt(v.ramFrames)}</div><div class="label">marcos disponibles</div></div>
+`},
+{tag:'e',title:'Páginas para el código de P1',render:v=>`
+  <p>Como el código no puede compartir página con los datos, se redondea siempre hacia arriba.</p>
+  <div class="formula">páginas = ⌈${fmt(v.codeBytes)} / ${fmt(v.pageSize)}⌉ = ⌈${(v.codeBytes/v.pageSize).toFixed(3)}⌉</div>
+  ${memBlocksHTML(v.codePages,0)}
+  <div class="legend"><span><span class="sw" style="background:var(--page)"></span>página de código</span></div>
+  <div class="answer"><div class="big">${fmt(v.codePages)} páginas</div><div class="label">para almacenar el código</div></div>
+`},
+{tag:'f',title:'Páginas para los datos de P1',render:v=>`
+  <div class="formula">páginas = ⌈${fmt(v.dataBytes)} / ${fmt(v.pageSize)}⌉ = ⌈${(v.dataBytes/v.pageSize).toFixed(3)}⌉</div>
+  ${memBlocksHTML(0,v.dataPages)}
+  <div class="legend"><span><span class="sw" style="background:var(--off)"></span>página de datos</span></div>
+  <div class="answer"><div class="big">${fmt(v.dataPages)} páginas</div><div class="label">para almacenar los datos</div></div>
+`},
+{tag:'g',title:'Fragmentación interna',render:v=>`
+  <p>Al no poder mezclar código y datos en una misma página, la última página de cada segmento queda parcialmente vacía.</p>
+  <div class="formula">frag. código = ${v.codePages}×${fmt(v.pageSize)} − ${fmt(v.codeBytes)} = ${fmt(v.fragCode)} B</div>
+  <div class="formula">frag. datos = ${v.dataPages}×${fmt(v.pageSize)} − ${fmt(v.dataBytes)} = ${fmt(v.fragData)} B</div>
+  <div class="memrow">${Array.from({length:v.codePages-1}).map(()=>'<div class="blk code"></div>').join('')}<div class="blk frag" title="fragmentación">·</div></div>
+  <div class="memrow">${Array.from({length:v.dataPages-1}).map(()=>'<div class="blk data"></div>').join('')}<div class="blk frag" title="fragmentación">·</div></div>
+  <div class="legend"><span><span class="sw" style="background:var(--bad)"></span>byte desperdiciado (frag. interna)</span></div>
+  <div class="answer"><div class="big">${fmt(v.fragTotal)} bytes</div><div class="label">${fmt(v.fragCode)} B (código) + ${fmt(v.fragData)} B (datos)</div></div>
+`},
+{tag:'h',title:'Tabla de páginas de 1 nivel',render:v=>`
+  <p>Con ${v.p1Bits} bits para identificar página, la tabla debe tener una entrada por cada página posible del espacio de direcciones, exista o no.</p>
+  <div class="formula">entradas = 2^${v.p1Bits} = ${v.oneLevelEntries.toLocaleString('es-AR')}</div>
+  <div class="formula">tamaño = entradas × tamaño de PTE = ${v.oneLevelEntries.toLocaleString('es-AR')} × ${fmt(v.pteSize1)} B</div>
+  <div class="pt-wrap">${ptStackHTML(1,'entradas asignadas (todas)',v.oneLevelEntries.toLocaleString('es-AR'))}</div>
+  <div class="answer"><div class="big">${bytesNice(v.oneLevelSize)}</div><div class="label">tamaño mínimo de la tabla en RAM</div></div>
+`},
+{tag:'i',title:'Tabla de páginas de 2 niveles',render:v=>`
+  <p>El nivel 1 (directorio) siempre se asigna completo. El nivel 2 sólo se crea para los rangos de página que P1 realmente usa.</p>
+  <div class="formula">tamaño de página aquí = 2^${v.l2Off} = ${fmt(v.pageSize2)} B</div>
+  <div class="formula">páginas de P1 = ⌈código/pág⌉ + ⌈datos/pág⌉ = ${v.codePages2} + ${v.dataPages2} = ${v.totalPages2}</div>
+  <div class="formula">nivel 1: 2^${v.l1Bits} × ${fmt(v.pteSize2)} B = ${bytesNice(v.l1Size)}</div>
+  <div class="formula">nivel 2: ${v.l2TablesNeeded} tabla(s) × 2^${v.l2Bits} × ${fmt(v.pteSize2)} B = ${bytesNice(v.l2Size)}</div>
+  <div class="pt-wrap">
+    ${ptStackHTML(1,'directorio (nivel 1, completo)','2^'+v.l1Bits)}
+    ${ptStackHTML(v.totalPages2/v.entriesPerL2,'tablas nivel 2 usadas',v.l2TablesNeeded+' de '+ (2**v.l1Bits))}
+  </div>
+  <div class="answer"><div class="big">${bytesNice(v.twoLevelTotal)}</div><div class="label">${bytesNice(v.l1Size)} (nivel 1) + ${bytesNice(v.l2Size)} (nivel 2 usado)</div></div>
+`},
+{tag:'j',title:'Conclusión: 1 nivel vs. 2 niveles',render:v=>`
+  <p>Comparando ambos resultados sobre el mismo proceso P1:</p>
+  <div class="memrow" style="gap:8px;align-items:flex-end;">
+    <div class="pt-box"><div class="t">1 nivel</div><div class="n">${bytesNice(v.oneLevelSize)}</div></div>
+    <div class="pt-box"><div class="t">2 niveles</div><div class="n" style="color:var(--off)">${bytesNice(v.twoLevelTotal)}</div></div>
+  </div>
+  <p>La tabla de un nivel reserva memoria para <b>todo</b> el espacio de direcciones posible, use el proceso esa memoria o no. La de dos niveles sólo materializa las tablas de segundo nivel que el proceso efectivamente necesita, dejando el resto sin asignar.</p>
+  <p>Por eso, para procesos que usan una fracción pequeña de su espacio de direcciones (como P1), la tabla multinivel ocupa muchísima menos RAM — a costa de un acceso a memoria extra por cada traducción de dirección.</p>
+  <div class="answer"><div class="big">${(v.oneLevelSize/v.twoLevelTotal).toFixed(1)}× menos memoria</div><div class="label">con tabla de 2 niveles frente a 1 nivel, en este caso</div></div>
+`}
+];
+
+let idx=0;
+const dotsEl=document.getElementById('dots'), cardEl=document.getElementById('card');
+const prevBtn=document.getElementById('prevBtn'), nextBtn=document.getElementById('nextBtn');
+
+function renderDots(){
+  dotsEl.innerHTML=steps.map((s,i)=>`<div class="dot ${i===idx?'active':''}" data-i="${i}">${s.tag}</div>`).join('');
+  dotsEl.querySelectorAll('.dot').forEach(d=>d.addEventListener('click',()=>{idx=+d.dataset.i;renderAll();}));
+}
+
+function renderCard(){
+  let v;
+  try{ v=compute(); }catch(e){ cardEl.innerHTML='<p>Revisá los valores ingresados.</p>'; return; }
+  const s=steps[idx];
+  cardEl.innerHTML=`<div class="tag">Inciso ${s.tag} · paso ${idx+1} de ${steps.length}</div><h2>${s.title}</h2><div class="body">${s.render(v)}</div>`;
+}
+
+function renderAll(){
+  renderDots();
+  renderCard();
+  prevBtn.disabled=idx===0;
+  nextBtn.disabled=idx===steps.length-1;
+}
+
+prevBtn.addEventListener('click',()=>{if(idx>0){idx--;renderAll();}});
+nextBtn.addEventListener('click',()=>{if(idx<steps.length-1){idx++;renderAll();}});
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'){if(idx<steps.length-1){idx++;renderAll();}}
+  if(e.key==='ArrowLeft'){if(idx>0){idx--;renderAll();}}
+});
+ids.forEach(id=>el[id].addEventListener('input',renderCard));
+
+renderAll();
+</script>
+</body>
+</html>
