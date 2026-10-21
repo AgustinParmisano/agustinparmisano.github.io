@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agustín Parmisano Sabbione — Portfolio</title>
+  <meta name="description" content="Portfolio de Agustín Parmisano Sabbione: ciberseguridad, docencia e investigación. Licenciado en Sistemas por la UNLP.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,520;9..144,640&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <style>
+:root {
+  --bg: #f3efe6;
+  --bg-side: #1c2822;
+  --ink: #1c211e;
+  --muted: #5c655e;
+  --line: #d8d0c2;
+  --card: #fbf8f2;
+  --accent: #c4552a;
+  --accent-deep: #8d3a1c;
+  --side-ink: #f4efe6;
+  --side-muted: #b7c0b6;
+  --serif: "Fraunces", "Iowan Old Style", Palatino, "Palatino Linotype", serif;
+  --sans: "Source Sans 3", "Segoe UI", sans-serif;
+  --shadow: 0 18px 40px rgba(28, 33, 30, 0.06);
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+
+a { color: var(--accent-deep); }
+
+a:hover { color: var(--accent); }
+
+.skip {
+  position: absolute;
+  left: 1rem;
+  top: -4rem;
+  background: var(--card);
+  color: var(--ink);
+  padding: 0.5rem 0.8rem;
+  z-index: 20;
+}
+
+.skip:focus { top: 1rem; }
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+  padding: 2rem 1.5rem;
+  background: var(--bg-side);
+  color: var(--side-ink);
+}
+
+.identity { display: flex; gap: 0.9rem; align-items: flex-start; }
+
+.monogram {
+  margin: 0.15rem 0 0;
+  flex: 0 0 auto;
+  width: 2.6rem;
+  height: 2.6rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(244, 239, 230, 0.35);
+  border-radius: 50%;
+  font-family: var(--serif);
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+}
+
+.eyebrow {
+  margin: 0 0 0.25rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.sidebar h1 {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 1.7rem;
+  font-weight: 520;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.role {
+  margin: 0.55rem 0 0;
+  color: var(--side-muted);
+  font-size: 0.98rem;
+}
+
+.nav-toggle {
+  display: none;
+  align-self: flex-start;
+  border: 1px solid rgba(244, 239, 230, 0.35);
+  background: transparent;
+  color: var(--side-ink);
+  font: inherit;
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.site-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.site-nav a {
+  color: var(--side-muted);
+  text-decoration: none;
+  padding: 0.35rem 0;
+  border-left: 2px solid transparent;
+  padding-left: 0.7rem;
+}
+
+.site-nav a:hover,
+.site-nav a.is-active {
+  color: var(--side-ink);
+  border-left-color: var(--accent);
+}
+
+.side-contact {
+  margin: auto 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.95rem;
+}
+
+.side-contact a {
+  color: var(--side-ink);
+  text-decoration: none;
+}
+
+.side-contact a:hover { color: #f0b089; }
+
+main {
+  padding: 3.2rem 6vw 4rem;
+  max-width: 920px;
+}
+
+.hero h2,
+.section-head h2,
+.timeline h3,
+.cards h3,
+.papers h3,
+.courses h3,
+.note h3 {
+  font-family: var(--serif);
+  font-weight: 520;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.hero h2 {
+  margin: 0 0 1rem;
+  font-size: clamp(2rem, 4vw, 3.15rem);
+  max-width: 16ch;
+}
+
+.lead {
+  margin: 0;
+  max-width: 62ch;
+  color: var(--muted);
+  font-size: 1.12rem;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 2rem 0 0;
+}
+
+.facts div {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
+  box-shadow: var(--shadow);
+}
+
+.facts dt {
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.facts dd { margin: 0.3rem 0 0; }
+
+section { padding-top: 3.4rem; }
+
+.section-head { margin-bottom: 1.3rem; }
+
+.section-head h2 { margin: 0; font-size: 2rem; }
+
+.timeline,
+.cards,
+.papers,
+.courses {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.timeline { display: grid; gap: 0; }
+
+.timeline li {
+  display: grid;
+  grid-template-columns: 11.5rem minmax(0, 1fr);
+  column-gap: 1.25rem;
+  row-gap: 0.25rem;
+  padding: 1rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.timeline li > .when {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.timeline li > h3,
+.timeline li > p:not(.when) {
+  grid-column: 2;
+}
+
+.timeline li[hidden] { display: none; }
+
+.when {
+  margin: 0.15rem 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.timeline h3,
+.cards h3,
+.papers h3,
+.courses h3 { margin: 0 0 0.25rem; font-size: 1.25rem; }
+
+.timeline p,
+.cards p,
+.papers p,
+.courses p,
+.note p { margin: 0; }
+
+.note {
+  margin-top: 1.2rem;
+  padding: 1rem 1.1rem;
+  background: #efe4d4;
+  border-radius: 14px;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 0.4rem;
+}
+
+.filters button,
+.button {
+  font: inherit;
+  cursor: pointer;
+  border-radius: 999px;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.filters button.is-active,
+.button {
+  background: var(--bg-side);
+  color: var(--side-ink);
+  border-color: var(--bg-side);
+}
+
+.filters button:hover,
+.button:hover { border-color: var(--accent); }
+
+.button-ghost {
+  background: transparent;
+  color: var(--ink);
+}
+
+.filter-status {
+  min-height: 1.3rem;
+  margin: 0 0 0.4rem;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.cards,
+.papers,
+.courses { display: grid; gap: 0.8rem; }
+
+.cards { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+
+.cards li,
+.papers li,
+.courses li {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 1rem 1.05rem;
+}
+
+.papers a {
+  display: inline-block;
+  margin-top: 0.7rem;
+  font-weight: 600;
+}
+
+.contact-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 1.2rem;
+}
+
+footer {
+  margin-top: 3rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+@media (max-width: 800px) {
+  .layout { grid-template-columns: 1fr; }
+
+  .sidebar {
+    position: sticky;
+    top: 0;
+    height: auto;
+    z-index: 5;
+    gap: 0.9rem;
+    padding: 1rem 1.1rem 1rem;
+  }
+
+  .side-contact { display: none; }
+
+  .nav-toggle { display: inline-flex; }
+
+  .site-nav {
+    display: none;
+    padding-bottom: 0.4rem;
+  }
+
+  .site-nav.is-open { display: flex; }
+
+  main { padding: 1.6rem 1.1rem 3rem; }
+
+  .facts,
+  .timeline li { grid-template-columns: 1fr; }
+
+  .timeline li > .when,
+  .timeline li > h3,
+  .timeline li > p:not(.when) { grid-column: 1; }
+
+  .hero h2 { max-width: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+
+@media print {
+  .sidebar, .filters, .filter-status, .nav-toggle, .contact-actions { display: none; }
+  .layout { display: block; }
+  body { background: white; }
+  .cards li, .papers li, .courses li, .facts div { box-shadow: none; }
+}
+  </style>
+</head>
+<body>
+  <a class="skip" href="#contenido">Saltar al contenido</a>
+
+  <div class="layout">
+    <header class="sidebar">
+      <div class="identity">
+        <p class="monogram" aria-hidden="true">AP</p>
+        <div>
+          <p class="eyebrow">La Plata, Buenos Aires</p>
+          <h1>Agustín Parmisano Sabbione</h1>
+          <p class="role">Ciberseguridad, docencia e investigación</p>
+        </div>
+      </div>
+
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="menu">
+        Secciones
+      </button>
+
+      <nav class="site-nav" id="menu" aria-label="Secciones">
+        <a href="#inicio">Inicio</a>
+        <a href="#formacion">Formación</a>
+        <a href="#experiencia">Experiencia</a>
+        <a href="#docencia">Docencia</a>
+        <a href="#investigacion">Investigación</a>
+        <a href="#publicaciones">Publicaciones</a>
+        <a href="#cursos">Cursos</a>
+        <a href="#contacto">Contacto</a>
+      </nav>
+
+      <ul class="side-contact">
+        <li><a href="mailto:agustinparmisano@gmail.com">agustinparmisano@gmail.com</a></li>
+        <li><a href="tel:+5492215015881">0221 15-501-5881</a></li>
+      </ul>
+    </header>
+
+    <main id="contenido">
+      <section id="inicio" class="hero">
+        <p class="eyebrow">Licenciado en Sistemas · UNLP</p>
+        <h2>Pentesting, malware y seguridad en redes, con una pata en el aula y otra en la investigación.</h2>
+        <p class="lead">
+          Analista Programador y Licenciado en Sistemas por la Facultad de Informática de la
+          Universidad Nacional de La Plata. Trabajó en ciberseguridad para organismos nacionales,
+          empresas y el laboratorio Stratosphere IPS, en Praga. Da clases de sistemas operativos
+          en la UNLP y cursa la especialización en Seguridad en Redes y la maestría en Redes.
+        </p>
+        <dl class="facts">
+          <div>
+            <dt>Grado</dt>
+            <dd>Licenciatura en Sistemas, 2019</dd>
+          </div>
+          <div>
+            <dt>Docencia</dt>
+            <dd>UNLP, desde 2015</dd>
+          </div>
+          <div>
+            <dt>Última actividad</dt>
+            <dd>Ciberseguridad, hasta 2023</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section id="formacion">
+        <header class="section-head">
+          <p class="eyebrow">01</p>
+          <h2>Formación académica</h2>
+        </header>
+        <ol class="timeline">
+          <li>
+            <p class="when">Desde julio 2026</p>
+            <h3>Maestría en Redes</h3>
+            <p>Facultad de Informática, Universidad Nacional de La Plata. Trabajo final en curso.</p>
+          </li>
+          <li>
+            <p class="when">En curso</p>
+            <h3>Especialización en Seguridad en Redes</h3>
+            <p>Facultad de Informática, Universidad Nacional de La Plata. Trabajo final en curso.</p>
+          </li>
+          <li>
+            <p class="when">Marzo 2019</p>
+            <h3>Licenciatura en Sistemas</h3>
+            <p>Facultad de Informática, Universidad Nacional de La Plata. Completo.</p>
+          </li>
+          <li>
+            <p class="when">Septiembre 2014</p>
+            <h3>Analista Programador Universitario</h3>
+            <p>Facultad de Informática, Universidad Nacional de La Plata. Completo.</p>
+          </li>
+          <li>
+            <p class="when">2007</p>
+            <h3>Bachiller</h3>
+            <p>Colegio de Bellas Artes, Universidad Nacional de La Plata.</p>
+          </li>
+        </ol>
+        <aside class="note">
+          <h3>Beca de investigación</h3>
+          <p>
+            Laboratorio de Investigación y Formación en Informática Avanzada (LIFIA),
+            Facultad de Informática, UNLP. Del 7 de abril de 2011 al 14 de febrero de 2014.
+          </p>
+        </aside>
+      </section>
+
+      <section id="experiencia">
+        <header class="section-head">
+          <p class="eyebrow">02</p>
+          <h2>Cargos y funciones</h2>
+        </header>
+        <div class="filters" role="group" aria-label="Filtrar experiencia">
+          <button type="button" class="is-active" data-filter="todos">Todo</button>
+          <button type="button" data-filter="publico">Sector público</button>
+          <button type="button" data-filter="privado">Sector privado</button>
+          <button type="button" data-filter="investigacion">Investigación</button>
+        </div>
+        <p class="filter-status" id="filter-status" aria-live="polite"></p>
+        <ol class="timeline" id="jobs">
+          <li data-sector="publico">
+            <p class="when">Sep 2022 — Dic 2023</p>
+            <h3>Consultor en ciberseguridad</h3>
+            <p>Presidencia de la Nación Argentina.</p>
+          </li>
+          <li data-sector="privado">
+            <p class="when">Sep 2022 — Dic 2023</p>
+            <h3>Pentester black &amp; white box</h3>
+            <p>DevP S.A.</p>
+          </li>
+          <li data-sector="publico">
+            <p class="when">Dic 2021 — Sep 2022</p>
+            <h3>Director de Tecnología y Soporte</h3>
+            <p>Presidencia de la Nación Argentina.</p>
+          </li>
+          <li data-sector="publico">
+            <p class="when">May 2021 — Dic 2021</p>
+            <h3>Analista en ciberseguridad</h3>
+            <p>Ministerio del Interior.</p>
+          </li>
+          <li data-sector="publico">
+            <p class="when">Abr 2021 — Dic 2021</p>
+            <h3>Consultor en ciberseguridad</h3>
+            <p>Honorable Cámara de Diputados de la Nación.</p>
+          </li>
+          <li data-sector="privado">
+            <p class="when">Nov 2020 — Dic 2021</p>
+            <h3>Pentester black &amp; white box</h3>
+            <p>Raizsec S.A.</p>
+          </li>
+          <li data-sector="publico">
+            <p class="when">Mar 2020 — Mar 2021</p>
+            <h3>Analista de seguridad en redes</h3>
+            <p>Jefatura de Gabinete de Ministros, Presidencia de la Nación.</p>
+          </li>
+          <li data-sector="investigacion">
+            <p class="when">Jul 2019 — Feb 2020</p>
+            <h3>Analista de malware e investigador</h3>
+            <p>Proyecto Aposemat, laboratorio Stratosphere IPS. Czech Technical University in Prague.</p>
+          </li>
+          <li data-sector="publico">
+            <p class="when">Jul 2018 — Jul 2019</p>
+            <h3>Analista en seguridad informática</h3>
+            <p>Dirección Provincial de Sistemas de Información y Tecnologías (DPSIT), Provincia de Buenos Aires.</p>
+          </li>
+        </ol>
+      </section>
+
+      <section id="docencia">
+        <header class="section-head">
+          <p class="eyebrow">03</p>
+          <h2>Docencia</h2>
+        </header>
+        <ol class="timeline">
+          <li>
+            <p class="when">2015 — actualidad</p>
+            <h3>Ayudante diplomado</h3>
+            <p>Introducción a los Sistemas Operativos. Facultad de Informática, Universidad Nacional de La Plata.</p>
+          </li>
+          <li>
+            <p class="when">2014 — 2016</p>
+            <h3>Profesor adjunto, dedicación simple</h3>
+            <p>Tecnicatura en Desarrollo de Software. Universidad Provincial de Ezeiza.</p>
+          </li>
+        </ol>
+      </section>
+
+      <section id="investigacion">
+        <header class="section-head">
+          <p class="eyebrow">04</p>
+          <h2>Investigación y desarrollo</h2>
+        </header>
+        <ul class="cards">
+          <li>
+            <h3>ASPIA, un repositorio federado como base semántica de Wikipedia</h3>
+            <p>Tres años. LIFIA, Facultad de Informática, UNLP. Participación como investigador y becario.</p>
+          </li>
+          <li>
+            <h3>Herramienta de prospección geofísica</h3>
+            <p>Seis meses. Secretaría de Extensión, Facultad de Ciencias Astronómicas y Geofísicas, UNLP. Participación como desarrollador.</p>
+          </li>
+          <li>
+            <h3>Control de consumo eléctrico inalámbrico para domótica e industria</h3>
+            <p>Dos años. Dispositivo modular, seguro y accesible. UNLP / FONSOFT. Participación como investigador y desarrollador.</p>
+          </li>
+        </ul>
+      </section>
+
+      <section id="publicaciones">
+        <header class="section-head">
+          <p class="eyebrow">05</p>
+          <h2>Publicaciones</h2>
+        </header>
+        <ul class="papers">
+          <li>
+            <p class="when">2012</p>
+            <h3>ASPIA, un Repositorio Federado como Base Semántica de Wikipedia</h3>
+            <p>Marcia Kaminose, Francisco Blanco, Agustín Parmisano, Diego Torres y Alicia Díaz. 13th Argentine Symposium on Artificial Intelligence (ASAI 2012).</p>
+            <a href="http://41jaiio.sadio.org.ar/sites/default/files/3_ASAI_2012.pdf" target="_blank" rel="noopener noreferrer">Leer el artículo</a>
+          </li>
+          <li>
+            <p class="when">2019</p>
+            <h3>Hexa Payload Decoder Tool</h3>
+            <p>Herramienta para extraer y decodificar datos hexadecimales en servidores de comando y control. Stratosphere IPS Research Blog.</p>
+            <a href="https://www.stratosphereips.org/blog/2019/10/8/hexa-payload-decoder-tool" target="_blank" rel="noopener noreferrer">Leer la nota</a>
+          </li>
+          <li>
+            <p class="when">2020</p>
+            <h3>Aposemat IoT-23</h3>
+            <p>Dataset etiquetado con tráfico de red IoT malicioso y benigno. Stratosphere IPS Research Blog.</p>
+            <a href="https://www.stratosphereips.org/blog/2020/1/22/aposemat-iot-23-a-labeled-dataset-with-malicious-and-benign-iot-network-traffic" target="_blank" rel="noopener noreferrer">Leer la nota</a>
+          </li>
+        </ul>
+      </section>
+
+      <section id="cursos">
+        <header class="section-head">
+          <p class="eyebrow">06</p>
+          <h2>Cursos y jornadas</h2>
+        </header>
+        <ul class="courses">
+          <li>
+            <h3>From Zero to Hero: Pentesting and Securing Docker, Swarm &amp; Kubernetes</h3>
+            <p>Asistido · 3 días · 24 horas</p>
+          </li>
+          <li>
+            <h3>Getting Your Hands Dirty: Understanding &amp; Hunting Down Malware Attacks in Your Network</h3>
+            <p>Ekoparty Security Conference · Asistido · 2 días · 16 horas</p>
+          </li>
+          <li>
+            <h3>Curso oficial Check Point CCSA + CCSE, versión R80.10</h3>
+            <p>Novared · Asistido · 5 días · 40 horas</p>
+          </li>
+          <li>
+            <h3>XVI Convención y Feria Internacional Informática 2016</h3>
+            <p>Ministerio de Comunicaciones de Cuba y Universidad de Ciencias Informáticas · Asistido · 5 días · 50 horas</p>
+          </li>
+          <li>
+            <h3>Curso de posgrado de Internet de las Cosas</h3>
+            <p>UNLP, Grupo Montevideo e Internet Society · Aprobado · 5 días · 45 horas</p>
+          </li>
+          <li>
+            <h3>CACIC 2014: software asociado a misiones satelitales</h3>
+            <p>Universidad Nacional de La Plata · Aprobado · 5 días · 20 horas</p>
+          </li>
+          <li>
+            <h3>Jornada OWASP Latam Tour, Buenos Aires 2014</h3>
+            <p>OWASP, Checkmarx y BlueHat Consultores · Asistido · 2 días · 20 horas</p>
+          </li>
+        </ul>
+      </section>
+
+      <section id="contacto">
+        <header class="section-head">
+          <p class="eyebrow">07</p>
+          <h2>Contacto</h2>
+        </header>
+        <p class="lead">La Plata, Buenos Aires. Nacido el 2 de noviembre de 1988.</p>
+        <div class="contact-actions">
+          <a class="button" href="mailto:agustinparmisano@gmail.com">Escribir un correo</a>
+          <button class="button button-ghost" type="button" id="copy-email" data-copy="agustinparmisano@gmail.com">Copiar email</button>
+          <a class="button button-ghost" href="tel:+5492215015881">0221 15-501-5881</a>
+        </div>
+      </section>
+
+      <footer>
+        <p>Agustín Parmisano Sabbione · Portfolio armado a partir del CV normalizado.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script>
+const toggle = document.querySelector(".nav-toggle");
+const nav = document.querySelector(".site-nav");
+
+toggle.addEventListener("click", () => {
+  const open = nav.classList.toggle("is-open");
+  toggle.setAttribute("aria-expanded", String(open));
+});
+
+nav.querySelectorAll("a").forEach((link) => {
+  link.addEventListener("click", () => {
+    nav.classList.remove("is-open");
+    toggle.setAttribute("aria-expanded", "false");
+  });
+});
+
+const links = [...nav.querySelectorAll("a")];
+const sections = links
+  .map((link) => document.querySelector(link.getAttribute("href")))
+  .filter(Boolean);
+
+const spy = new IntersectionObserver(
+  (entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      const id = `#${entry.target.id}`;
+      links.forEach((link) => {
+        link.classList.toggle("is-active", link.getAttribute("href") === id);
+      });
+    });
+  },
+  { rootMargin: "-45% 0px -48% 0px", threshold: 0 }
+);
+
+sections.forEach((section) => spy.observe(section));
+
+const jobs = [...document.querySelectorAll("#jobs li")];
+const status = document.querySelector("#filter-status");
+const filters = [...document.querySelectorAll("[data-filter]")];
+const labels = {
+  todos: "",
+  publico: " en el sector público",
+  privado: " en el sector privado",
+  investigacion: " de investigación",
+};
+
+function applyFilter(key) {
+  let visible = 0;
+  jobs.forEach((job) => {
+    const show = key === "todos" || job.dataset.sector === key;
+    job.hidden = !show;
+    if (show) visible += 1;
+  });
+  filters.forEach((button) => {
+    const active = button.dataset.filter === key;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
+  const noun = visible === 1 ? "cargo" : "cargos";
+  status.textContent = `${visible} ${noun}${labels[key]}.`;
+}
+
+filters.forEach((button) => {
+  button.addEventListener("click", () => applyFilter(button.dataset.filter));
+});
+
+applyFilter("todos");
+
+const copyButton = document.querySelector("#copy-email");
+const copyLabel = copyButton.textContent;
+
+copyButton.addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText(copyButton.dataset.copy);
+    copyButton.textContent = "Email copiado";
+  } catch {
+    copyButton.textContent = "No se pudo copiar";
+  }
+  window.setTimeout(() => {
+    copyButton.textContent = copyLabel;
+  }, 1800);
+});
+  </script>
+</body>
+</html>
