@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Terminal Bash</title>
+	<style>
+		/* ==========================================================
+		   Paleta de la consola
+		   ========================================================== */
+		:root {
+			--bg: #0c0c0c;
+			--fg: #d0d0d0;
+			--dim: #6b6b6b;
+			--border: #2a2a2a;
+			--active: #3fb950;
+			--user: #3fb950;
+			--path: #58a6ff;
+			--dir: #58a6ff;
+			--error: #f85149;
+			--toolbar: #161616;
+			--font: "JetBrains Mono", "Fira Code", "DejaVu Sans Mono", Consolas, monospace;
+		}
+
+		* { box-sizing: border-box; }
+
+		html, body {
+			margin: 0;
+			height: 100%;
+			background: var(--bg);
+			color: var(--fg);
+			font-family: var(--font);
+			font-size: 14px;
+		}
+
+		body {
+			display: flex;
+			flex-direction: column;
+		}
+
+		/* ==========================================================
+		   Barra superior con los controles tipo tmux
+		   ========================================================== */
+		#toolbar {
+			display: flex;
+			flex-wrap: wrap;
+			align-items: center;
+			gap: 8px;
+			padding: 8px 12px;
+			background: var(--toolbar);
+			border-bottom: 1px solid var(--border);
+		}
+
+		#toolbar .title {
+			color: var(--active);
+			font-weight: bold;
+			margin-right: auto;
+		}
+
+		#toolbar button {
+			font: inherit;
+			font-size: 13px;
+			color: var(--fg);
+			background: #222;
+			border: 1px solid #3a3a3a;
+			border-radius: 4px;
+			padding: 5px 10px;
+			cursor: pointer;
+		}
+
+		#toolbar button:hover { background: #2d2d2d; border-color: var(--active); }
+		#toolbar button.danger:hover { border-color: var(--error); }
+
+		#toolbar kbd {
+			color: var(--dim);
+			font-size: 11px;
+			margin-left: 4px;
+		}
+
+		/* ==========================================================
+		   Área de panes: árbol de contenedores flex anidados
+		   ========================================================== */
+		#workspace {
+			flex: 1;
+			display: flex;
+			min-height: 0;
+			padding: 4px;
+		}
+
+		.split {
+			flex: 1 1 0;
+			display: flex;
+			gap: 4px;
+			min-width: 0;
+			min-height: 0;
+		}
+
+		.split.row { flex-direction: row; }
+		.split.column { flex-direction: column; }
+
+		/* Cada pane es una terminal independiente */
+		.pane {
+			flex: 1 1 0;
+			display: flex;
+			flex-direction: column;
+			min-width: 120px;
+			min-height: 80px;
+			border: 1px solid var(--border);
+			border-radius: 3px;
+			overflow: hidden;
+		}
+
+		.pane.active { border-color: var(--active); }
+
+		.pane-header {
+			display: flex;
+			justify-content: space-between;
+			gap: 8px;
+			padding: 2px 8px;
+			font-size: 12px;
+			color: var(--dim);
+			background: #121212;
+			border-bottom: 1px solid var(--border);
+			white-space: nowrap;
+			overflow: hidden;
+		}
+
+		.pane.active .pane-header { color: var(--active); }
+
+		.pane-body {
+			flex: 1;
+			overflow-y: auto;
+			padding: 6px 8px;
+			cursor: text;
+			white-space: pre-wrap;
+			word-break: break-word;
+			line-height: 1.4;
+		}
+
+		/* Línea de entrada: prompt + input transparente */
+		.input-line {
+			display: flex;
+		}
+
+		.input-line input {
+			flex: 1;
+			min-width: 20px;
+			font: inherit;
+			color: var(--fg);
+			background: transparent;
+			border: none;
+			outline: none;
+			padding: 0;
+			caret-color: var(--active);
+		}
+
+		.prompt-user { color: var(--user); font-weight: bold; }
+		.prompt-path { color: var(--path); font-weight: bold; }
+		.ls-dir { color: var(--dir); font-weight: bold; }
+		.error { color: var(--error); }
+		.muted { color: var(--dim); }
+
+		@media (max-width: 600px) {
+			#toolbar kbd { display: none; }
+			#toolbar .title { width: 100%; }
+		}
+	</style>
+</head>
+<body>
+	<div id="toolbar">
+		<span class="title">bash — tmux</span>
+		<button id="btn-split-v" title="Divide el pane activo en dos columnas (tmux: Ctrl+b %)">Dividir Vertical<kbd>Ctrl+b %</kbd></button>
+		<button id="btn-split-h" title="Divide el pane activo en dos filas (tmux: Ctrl+b &quot;)">Dividir Horizontal<kbd>Ctrl+b "</kbd></button>
+		<button id="btn-close" class="danger" title="Cierra el pane activo (tmux: Ctrl+b x)">Cerrar Terminal Activa<kbd>Ctrl+b x</kbd></button>
+	</div>
+	<div id="workspace"></div>
+
+	<script>
+	/* ==============================================================
+	   1. SISTEMA DE ARCHIVOS GLOBAL Y REACTIVO
+	   Un único árbol en memoria compartido por todas las terminales.
+	   Cada cambio notifica a los suscriptores (los panes) para que
+	   actualicen lo que muestran.
+	   ============================================================== */
+	const USER = 'usuario';
+	const HOST = 'linux';
+	const HOME = '/home/' + USER;
+
+	const FileSystem = (() => {
+		const listeners = new Set();
+
+		const makeDir = () => ({ type: 'dir', children: {}, mtime: new Date() });
+		const makeFile = (content = '') => ({ type: 'file', content, mtime: new Date() });
+
+		// Estructura inicial del disco
+		const root = makeDir();
+
+		/** Convierte una ruta (absoluta o relativa a cwd) en una ruta absoluta normalizada. */
+		function resolve(cwd, path) {
+			if (!path || path === '~') return HOME;
+			if (path.startsWith('~/')) path = HOME + path.slice(1);
+			const base = path.startsWith('/') ? [] : cwd.split('/').filter(Boolean);
+			for (const part of path.split('/')) {
+				if (part === '' || part === '.') continue;
+				if (part === '..') base.pop();
+				else base.push(part);
+			}
+			return '/' + base.join('/');
+		}
+
+		/** Devuelve el nodo en una ruta absoluta, o null si no existe. */
+		function getNode(absPath) {
+			let node = root;
+			for (const part of absPath.split('/').filter(Boolean)) {
+				if (node.type !== 'dir' || !node.children[part]) return null;
+				node = node.children[part];
+			}
+			return node;
+		}
+
+		/** Separa una ruta absoluta en directorio padre y nombre final. */
+		function splitPath(absPath) {
+			const parts = absPath.split('/').filter(Boolean);
+			const name = parts.pop();
+			return { parent: '/' + parts.join('/'), name };
+		}
+
+		function notify(path) {
+			listeners.forEach(fn => fn(path));
+		}
+
+		/** Crea un directorio. Con parents=true crea los intermedios (mkdir -p). */
+		function mkdir(absPath, parents = false) {
+			if (absPath === '/') throw `no se puede crear el directorio «/»: El archivo ya existe`;
+			const { parent, name } = splitPath(absPath);
+			let parentNode = getNode(parent);
+			if (!parentNode) {
+				if (!parents) throw `no se puede crear el directorio «${absPath}»: No existe el archivo o el directorio`;
+				mkdir(parent, true);
+				parentNode = getNode(parent);
+			}
+			if (parentNode.type !== 'dir') throw `no se puede crear el directorio «${absPath}»: No es un directorio`;
+			if (parentNode.children[name]) {
+				if (parents && parentNode.children[name].type === 'dir') return;
+				throw `no se puede crear el directorio «${absPath}»: El archivo ya existe`;
+			}
+			parentNode.children[name] = makeDir();
+			parentNode.mtime = new Date();
+			notify(absPath);
+		}
+
+		/** Crea un archivo vacío o actualiza su fecha si ya existe (touch). */
+		function touch(absPath) {
+			const { parent, name } = splitPath(absPath);
+			const parentNode = getNode(parent);
+			if (!parentNode || parentNode.type !== 'dir') throw `no se puede efectuar \`touch' sobre '${absPath}': No existe el archivo o el directorio`;
+			const existing = parentNode.children[name];
+			if (existing) existing.mtime = new Date();
+			else parentNode.children[name] = makeFile();
+			notify(absPath);
+		}
+
+		/** Escribe contenido en un archivo (usado por echo > y >>). */
+		function write(absPath, text, append = false) {
+			const { parent, name } = splitPath(absPath);
+			const parentNode = getNode(parent);
+			if (!parentNode || parentNode.type !== 'dir') throw `${absPath}: No existe el archivo o el directorio`;
+			const existing = parentNode.children[name];
+			if (existing && existing.type === 'dir') throw `${absPath}: Es un directorio`;
+			if (existing && append) existing.content += text;
+			else parentNode.children[name] = makeFile(text);
+			parentNode.children[name].mtime = new Date();
+			notify(absPath);
+		}
+
+		function subscribe(fn) {
+			listeners.add(fn);
+			return () => listeners.delete(fn);
+		}
+
+		// Contenido de ejemplo para tener algo que explorar
+		['/bin', '/etc', '/tmp', '/var/log', HOME + '/documentos', HOME + '/proyectos/web']
+			.forEach(p => mkdir(p, true));
+		write('/etc/hostname', HOST + '\n');
+		write(HOME + '/LEEME.txt',
+			'Bienvenido a la terminal de práctica.\n' +
+			'Todos los panes comparten este mismo sistema de archivos:\n' +
+			'creá algo en un pane y listalo desde otro.\n');
+		write(HOME + '/proyectos/web/index.html', '<h1>Hola mundo</h1>\n');
+
+		return { resolve, getNode, mkdir, touch, write, subscribe };
+	})();
+
+	/* ==============================================================
+	   2. UTILIDADES
+	   ============================================================== */
+
+	/** Escapa texto para insertarlo como HTML sin riesgo. */
+	function esc(text) {
+		return String(text).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+	}
+
+	/** Muestra una ruta abreviando el home como «~», igual que bash. */
+	function prettyPath(path) {
+		if (path === HOME) return '~';
+		if (path.startsWith(HOME + '/')) return '~' + path.slice(HOME.length);
+		return path;
+	}
+
+	/** Separa una línea en argumentos respetando comillas simples y dobles. */
+	function tokenize(line) {
+		const tokens = [];
+		const re = /"([^"]*)"|'([^']*)'|(\S+)/g;
+		let m;
+		while ((m = re.exec(line))) tokens.push(m[1] ?? m[2] ?? m[3]);
+		return tokens;
+	}
+
+	/* ==============================================================
+	   3. TERMINAL: una instancia por pane, con su propio historial
+	   de comandos y su propio directorio actual (cwd).
+	   ============================================================== */
+	let nextId = 1;
+
+	class Terminal {
+		constructor() {
+			this.id = nextId++;
+			this.cwd = HOME;
+			this.prevCwd = HOME;     // para «cd -»
+			this.history = [];       // comandos ejecutados
+			this.historyIndex = 0;   // posición al navegar con ↑ / ↓
+
+			this.buildDom();
+			this.print(`<span class="muted">Terminal #${this.id}. Escribí «help» para ver los comandos.</span>`);
+
+			// Reactividad: cuando cambia el FS, se actualiza el encabezado del pane
+			this.unsubscribe = FileSystem.subscribe(() => this.updateHeader());
+			this.updateHeader();
+		}
+
+		buildDom() {
+			this.el = document.createElement('div');
+			this.el.className = 'pane';
+			this.el.innerHTML = `
+				<div class="pane-header"><span class="h-title"></span><span class="h-info"></span></div>
+				<div class="pane-body">
+					<div class="output"></div>
+					<div class="input-line">
+						<span class="prompt"></span>
+						<input type="text" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Comando">
+					</div>
+				</div>`;
+			this.body = this.el.querySelector('.pane-body');
+			this.output = this.el.querySelector('.output');
+			this.promptEl = this.el.querySelector('.prompt');
+			this.input = this.el.querySelector('input');
+			this.renderPrompt();
+
+			// Hacer clic en cualquier parte del pane le da el foco
+			// (salvo que el usuario esté seleccionando texto para copiar)
+			this.el.addEventListener('mousedown', () => Panes.setActive(this));
+			this.el.addEventListener('click', () => {
+				if (!window.getSelection().toString()) this.input.focus();
+			});
+			this.input.addEventListener('focus', () => Panes.setActive(this));
+			this.input.addEventListener('keydown', e => this.onKey(e));
+		}
+
+		promptHtml() {
+			return `<span class="prompt-user">${USER}@${HOST}</span>:<span class="prompt-path">${esc(prettyPath(this.cwd))}</span>$ `;
+		}
+
+		renderPrompt() {
+			this.promptEl.innerHTML = this.promptHtml();
+		}
+
+		/** Encabezado del pane: ruta actual y cantidad de elementos (se actualiza solo). */
+		updateHeader() {
+			const node = FileSystem.getNode(this.cwd);
+			const count = node && node.type === 'dir' ? Object.keys(node.children).length : 0;
+			this.el.querySelector('.h-title').textContent = `[${this.id}] ${prettyPath(this.cwd)}`;
+			this.el.querySelector('.h-info').textContent = `${count} elemento${count === 1 ? '' : 's'}`;
+		}
+
+		print(html) {
+			const line = document.createElement('div');
+			line.innerHTML = html;
+			this.output.appendChild(line);
+		}
+
+		focus() {
+			this.input.focus();
+		}
+
+		destroy() {
+			this.unsubscribe();
+			this.el.remove();
+		}
+
+		onKey(e) {
+			if (e.key === 'Enter') {
+				const line = this.input.value;
+				this.input.value = '';
+				this.print(this.promptHtml() + esc(line));
+				if (line.trim()) {
+					this.history.push(line);
+				}
+				this.historyIndex = this.history.length;
+				this.execute(line.trim());
+				this.renderPrompt();
+				this.updateHeader();
+				this.body.scrollTop = this.body.scrollHeight;
+			} else if (e.key === 'ArrowUp') {
+				e.preventDefault();
+				if (this.historyIndex > 0) this.input.value = this.history[--this.historyIndex];
+			} else if (e.key === 'ArrowDown') {
+				e.preventDefault();
+				if (this.historyIndex < this.history.length - 1) {
+					this.input.value = this.history[++this.historyIndex];
+				} else {
+					this.historyIndex = this.history.length;
+					this.input.value = '';
+				}
+			} else if (e.key === 'Tab') {
+				e.preventDefault();
+				this.autocomplete();
+			} else if (e.key === 'l' && e.ctrlKey) {
+				e.preventDefault();
+				this.output.innerHTML = '';
+			}
+		}
+
+		/** Autocompleta comandos (primera palabra) o rutas (resto) con Tab. */
+		autocomplete() {
+			const value = this.input.value;
+			const words = value.split(' ');
+			const current = words[words.length - 1];
+			let candidates;
+
+			if (words.length === 1) {
+				candidates = Object.keys(COMMANDS).filter(c => c.startsWith(current));
+			} else {
+				const slash = current.lastIndexOf('/');
+				const dirPart = slash >= 0 ? current.slice(0, slash + 1) : '';
+				const namePart = current.slice(slash + 1);
+				const dir = FileSystem.getNode(FileSystem.resolve(this.cwd, dirPart || '.'));
+				if (!dir || dir.type !== 'dir') return;
+				candidates = Object.keys(dir.children)
+					.filter(n => n.startsWith(namePart))
+					.map(n => dirPart + n + (dir.children[n].type === 'dir' ? '/' : ''));
+			}
+
+			if (candidates.length === 1) {
+				words[words.length - 1] = candidates[0] + (candidates[0].endsWith('/') ? '' : ' ');
+				this.input.value = words.join(' ');
+			} else if (candidates.length > 1) {
+				this.print(this.promptHtml() + esc(value));
+				this.print(candidates.map(esc).join('  '));
+			}
+		}
+
+		/** Interpreta una línea: separa redirecciones y despacha al comando. */
+		execute(line) {
+			if (!line) return;
+
+			// Soporte simple de redirección: comando > archivo / comando >> archivo
+			let redirect = null;
+			const m = line.match(/^(.*?)\s*(>>?)\s*(\S+)$/);
+			if (m && !/["']/.test(m[3])) {
+				redirect = { append: m[2] === '>>', path: m[3] };
+				line = m[1];
+			}
+
+			const [name, ...args] = tokenize(line);
+			const cmd = COMMANDS[name];
+			if (!cmd) {
+				this.print(`<span class="error">${esc(name)}: orden no encontrada</span>`);
+				return;
+			}
+
+			// Cada comando devuelve texto plano/HTML o lanza un string de error
+			const out = [];
+			const ctx = {
+				term: this,
+				out: html => out.push(html),
+				// Texto plano (se escapa), útil para cat/echo y para redirecciones
+				text: str => out.push({ raw: str }),
+			};
+
+			try {
+				cmd.run(args, ctx);
+			} catch (err) {
+				this.print(`<span class="error">${esc(name)}: ${esc(err)}</span>`);
+				return;
+			}
+
+			if (redirect) {
+				// Sólo el texto plano se escribe al archivo
+				const content = out.map(o => (typeof o === 'object' ? o.raw : o.replace(/<[^>]+>/g, ''))).join('\n');
+				try {
+					FileSystem.write(FileSystem.resolve(this.cwd, redirect.path), content + '\n', redirect.append);
+				} catch (err) {
+					this.print(`<span class="error">bash: ${esc(err)}</span>`);
+				}
+				return;
+			}
+
+			out.forEach(o => this.print(typeof o === 'object' ? esc(o.raw) : o));
+		}
+	}
+
+	/* ==============================================================
+	   4. COMANDOS
+	   Cada comando recibe sus argumentos y un contexto con la
+	   terminal que lo ejecuta (para leer/cambiar su cwd).
+	   ============================================================== */
+	const COMMANDS = {
+		help: {
+			desc: 'muestra esta ayuda',
+			run(args, { out }) {
+				out('Comandos disponibles:');
+				Object.entries(COMMANDS).forEach(([name, c]) =>
+					out(`  <span class="prompt-user">${name.padEnd(7)}</span> ${esc(c.desc)}`));
+				out('');
+				out('<span class="muted">Teclas: ↑/↓ historial · Tab autocompletar · Ctrl+L limpiar</span>');
+				out('<span class="muted">tmux: Ctrl+b %  dividir vertical · Ctrl+b "  dividir horizontal · Ctrl+b x  cerrar · Ctrl+b o / flechas  cambiar de pane</span>');
+			},
+		},
+
+		ls: {
+			desc: '[-a] [ruta...]  lista el contenido de directorios (carpetas en azul)',
+			run(args, { term, out }) {
+				const showHidden = args.includes('-a');
+				const paths = args.filter(a => !a.startsWith('-'));
+				if (!paths.length) paths.push('.');
+
+				paths.forEach((p, i) => {
+					const abs = FileSystem.resolve(term.cwd, p);
+					const node = FileSystem.getNode(abs);
+					if (!node) throw `no se puede acceder a '${p}': No existe el archivo o el directorio`;
+					if (node.type === 'file') { out(esc(p)); return; }
+
+					if (paths.length > 1) out(`${i ? '\n' : ''}${esc(p)}:`);
+					const names = Object.keys(node.children).sort((a, b) => a.localeCompare(b));
+					const entries = (showHidden ? ['.', '..', ...names] : names.filter(n => !n.startsWith('.')))
+						.map(n => {
+							const isDir = n === '.' || n === '..' || node.children[n].type === 'dir';
+							return isDir ? `<span class="ls-dir">${esc(n)}</span>` : esc(n);
+						});
+					if (entries.length) out(entries.join('  '));
+				});
+			},
+		},
+
+		cd: {
+			desc: '[ruta]  cambia de directorio (admite ~, .., -, rutas absolutas y relativas)',
+			run(args, { term, out }) {
+				let target = args[0];
+				if (target === '-') {
+					target = term.prevCwd;
+					out(esc(target));
+				}
+				const abs = FileSystem.resolve(term.cwd, target);
+				const node = FileSystem.getNode(abs);
+				if (!node) throw `${args[0]}: No existe el archivo o el directorio`;
+				if (node.type !== 'dir') throw `${args[0]}: No es un directorio`;
+				term.prevCwd = term.cwd;
+				term.cwd = abs;
+			},
+		},
+
+		pwd: {
+			desc: 'muestra el directorio actual',
+			run(args, { term, text }) {
+				text(term.cwd);
+			},
+		},
+
+		mkdir: {
+			desc: '[-p] dir...  crea directorios',
+			run(args, { term }) {
+				const parents = args.includes('-p');
+				const dirs = args.filter(a => a !== '-p');
+				if (!dirs.length) throw 'falta un operando';
+				dirs.forEach(d => FileSystem.mkdir(FileSystem.resolve(term.cwd, d), parents));
+			},
+		},
+
+		touch: {
+			desc: 'archivo...  crea archivos vacíos',
+			run(args, { term }) {
+				if (!args.length) throw 'falta un archivo como operando';
+				args.forEach(f => FileSystem.touch(FileSystem.resolve(term.cwd, f)));
+			},
+		},
+
+		cat: {
+			desc: 'archivo...  muestra el contenido de archivos',
+			run(args, { term, text }) {
+				if (!args.length) throw 'falta un archivo como operando';
+				args.forEach(f => {
+					const node = FileSystem.getNode(FileSystem.resolve(term.cwd, f));
+					if (!node) throw `${f}: No existe el archivo o el directorio`;
+					if (node.type === 'dir') throw `${f}: Es un directorio`;
+					if (node.content) text(node.content.replace(/\n$/, ''));
+				});
+			},
+		},
+
+		echo: {
+			desc: 'texto  imprime texto (usá > o >> para escribir en un archivo)',
+			run(args, { text }) {
+				text(args.join(' '));
+			},
+		},
+
+		clear: {
+			desc: 'limpia la pantalla',
+			run(args, { term }) {
+				term.output.innerHTML = '';
+			},
+		},
+
+		whoami: {
+			desc: 'muestra el usuario actual',
+			run(args, { text }) {
+				text(USER);
+			},
+		},
+	};
+
+	/* ==============================================================
+	   5. GESTOR DE PANES (multiplexación tipo tmux)
+	   El layout es un árbol: las hojas son terminales y los nodos
+	   internos son divisiones «row» (lado a lado) o «column» (apiladas).
+	   ============================================================== */
+	const Panes = (() => {
+		const workspace = document.getElementById('workspace');
+		let layout = null;   // nodo raíz del árbol
+		let active = null;   // terminal con el foco
+
+		const leaf = term => ({ type: 'pane', term });
+
+		/** Busca la hoja de una terminal y devuelve { node, parent }. */
+		function find(node, term, parent = null) {
+			if (node.type === 'pane') return node.term === term ? { node, parent } : null;
+			for (const child of node.children) {
+				const found = find(child, term, node);
+				if (found) return found;
+			}
+			return null;
+		}
+
+		/** Lista de terminales en orden visual (para Ctrl+b o). */
+		function allTerms(node = layout, acc = []) {
+			if (node.type === 'pane') acc.push(node.term);
+			else node.children.forEach(c => allTerms(c, acc));
+			return acc;
+		}
+
+		/** Reconstruye los contenedores flex. Los elementos de cada
+		    terminal se reutilizan, así no se pierde su contenido. */
+		function render() {
+			const build = node => {
+				if (node.type === 'pane') return node.term.el;
+				const div = document.createElement('div');
+				div.className = 'split ' + node.dir;
+				node.children.forEach(c => div.appendChild(build(c)));
+				return div;
+			};
+			workspace.replaceChildren(build(layout));
+		}
+
+		function setActive(term) {
+			if (active === term) return;
+			active?.el.classList.remove('active');
+			active = term;
+			active.el.classList.add('active');
+		}
+
+		/** Divide el pane activo. dir = 'row' (vertical) o 'column' (horizontal). */
+		function split(dir) {
+			const newTerm = new Terminal();
+			newTerm.cwd = active.cwd;   // como tmux, el nuevo pane hereda el directorio
+			newTerm.renderPrompt();
+			newTerm.updateHeader();
+
+			const { node, parent } = find(layout, active);
+			if (parent && parent.dir === dir) {
+				// Misma dirección que el padre: se agrega como hermano
+				parent.children.splice(parent.children.indexOf(node) + 1, 0, leaf(newTerm));
+			} else {
+				// Dirección distinta: la hoja se convierte en una nueva división
+				const old = leaf(node.term);
+				Object.assign(node, { type: 'split', dir, children: [old, leaf(newTerm)] });
+				delete node.term;
+			}
+			render();
+			setActive(newTerm);
+			newTerm.focus();
+		}
+
+		/** Cierra el pane activo y pasa el foco al pane vecino. */
+		function close() {
+			const terms = allTerms();
+			if (terms.length === 1) {
+				// Último pane: en vez de dejar la pantalla vacía, se abre uno nuevo
+				const fresh = new Terminal();
+				active.destroy();
+				layout = leaf(fresh);
+				active = null;
+				render();
+				setActive(fresh);
+				fresh.focus();
+				return;
+			}
+
+			const index = terms.indexOf(active);
+			const { node, parent } = find(layout, active);
+			parent.children.splice(parent.children.indexOf(node), 1);
+
+			// Si la división queda con un solo hijo, se colapsa en su lugar
+			if (parent.children.length === 1) {
+				const only = parent.children[0];
+				Object.keys(parent).forEach(k => delete parent[k]);
+				Object.assign(parent, only);
+			}
+
+			active.destroy();
+			active = null;
+			render();
+			const next = allTerms()[Math.max(0, index - 1)];
+			setActive(next);
+			next.focus();
+		}
+
+		/** Mueve el foco al pane siguiente o anterior. */
+		function cycle(step) {
+			const terms = allTerms();
+			const next = terms[(terms.indexOf(active) + step + terms.length) % terms.length];
+			setActive(next);
+			next.focus();
+		}
+
+		function init() {
+			const first = new Terminal();
+			layout = leaf(first);
+			render();
+			setActive(first);
+			first.focus();
+		}
+
+		return { init, split, close, cycle, setActive };
+	})();
+
+	/* ==============================================================
+	   6. CONTROLES: botones de la barra y atajos tmux (Ctrl+b)
+	   ============================================================== */
+	document.getElementById('btn-split-v').addEventListener('click', () => Panes.split('row'));
+	document.getElementById('btn-split-h').addEventListener('click', () => Panes.split('column'));
+	document.getElementById('btn-close').addEventListener('click', () => Panes.close());
+
+	// Prefijo tmux: Ctrl+b y luego la tecla de acción
+	let prefixPressed = false;
+	document.addEventListener('keydown', e => {
+		if (e.ctrlKey && e.key === 'b') {
+			e.preventDefault();
+			prefixPressed = true;
+			return;
+		}
+		if (!prefixPressed || ['Control', 'Shift', 'Alt'].includes(e.key)) return;
+		prefixPressed = false;
+
+		const actions = {
+			'%': () => Panes.split('row'),
+			'"': () => Panes.split('column'),
+			'x': () => Panes.close(),
+			'o': () => Panes.cycle(1),
+			'ArrowRight': () => Panes.cycle(1),
+			'ArrowDown': () => Panes.cycle(1),
+			'ArrowLeft': () => Panes.cycle(-1),
+			'ArrowUp': () => Panes.cycle(-1),
+		};
+		if (actions[e.key]) {
+			e.preventDefault();
+			e.stopPropagation();
+			actions[e.key]();
+		}
+	}, true);
+
+	Panes.init();
+	</script>
+</body>
+</html>
